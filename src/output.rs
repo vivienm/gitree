@@ -12,7 +12,8 @@ fn is_executable(md: &fs::Metadata) -> bool {
 }
 
 fn get_path_style<'a>(path: &Path, ls_colors: &'a LsColors) -> Option<&'a ansi_term::Style> {
-    if path.symlink_metadata()
+    if path
+        .symlink_metadata()
         .map(|md| md.file_type().is_symlink())
         .unwrap_or(false)
     {
@@ -25,12 +26,14 @@ fn get_path_style<'a>(path: &Path, ls_colors: &'a LsColors) -> Option<&'a ansi_t
         Some(&ls_colors.directory)
     } else if metadata.map(|md| is_executable(&md)).unwrap_or(false) {
         Some(&ls_colors.executable)
-    } else if let Some(filename_style) = path.file_name()
+    } else if let Some(filename_style) = path
+        .file_name()
         .and_then(|n| n.to_str())
         .and_then(|n| ls_colors.filenames.get(n))
     {
         Some(filename_style)
-    } else if let Some(extension_style) = path.extension()
+    } else if let Some(extension_style) = path
+        .extension()
         .and_then(|e| e.to_str())
         .and_then(|e| ls_colors.extensions.get(e))
     {
