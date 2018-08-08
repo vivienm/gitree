@@ -29,6 +29,14 @@ pub fn build_app() -> App<'static, 'static> {
                 .help("Sets maximum depth"),
         )
         .arg(
+            Arg::with_name("exclude")
+                .long("exclude")
+                .short("E")
+                .takes_value(true)
+                .value_name("PATTERN")
+                .help("Excludes files and directories that match the glob pattern"),
+        )
+        .arg(
             Arg::with_name("color")
                 .long("color")
                 .short("c")
