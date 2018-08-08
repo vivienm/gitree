@@ -23,25 +23,22 @@ impl<'a> PathTree<'a> {
 
     pub fn insert(&mut self, path: &'a Path) {
         let mut path = path;
-        loop {
-            if self.roots.contains(path) {
-                break;
-            };
-            if let Some(parent) = path.parent() {
-                match self.children.entry(parent) {
-                    hash_map::Entry::Occupied(mut entry) => {
-                        entry.get_mut().insert(path);
-                        break;
-                    }
-                    hash_map::Entry::Vacant(entry) => {
-                        let mut children = HashSet::with_capacity(Self::SET_CAPACITY);
-                        children.insert(path);
-                        entry.insert(children);
-                        path = parent;
-                    }
+        let ancestors = path.ancestors().skip(1);
+        for parent in ancestors {
+            match self.children.entry(parent) {
+                hash_map::Entry::Occupied(mut entry) => {
+                    entry.get_mut().insert(path);
+                    return;
                 }
-            } else {
-                unreachable!();
+                hash_map::Entry::Vacant(entry) => {
+                    let mut children = HashSet::with_capacity(Self::SET_CAPACITY);
+                    children.insert(path);
+                    entry.insert(children);
+                    path = parent;
+                }
+            }
+            if self.roots.contains(parent) {
+                return;
             }
         }
     }
