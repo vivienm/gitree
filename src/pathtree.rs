@@ -46,12 +46,7 @@ impl<'a> PathTree<'a> {
         }
     }
 
-    pub fn _for_each(
-        &self,
-        func: &Fn(&Vec<bool>, &Path),
-        prefixes: &mut Vec<bool>,
-        path: &Path,
-    ) {
+    pub fn _for_each(&self, func: &Fn(&Vec<bool>, &Path), prefixes: &mut Vec<bool>, path: &Path) {
         func(&prefixes, path);
         if let Some(children) = self.children.get(path) {
             let mut children: Vec<_> = children.iter().collect();
