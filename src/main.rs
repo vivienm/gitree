@@ -60,14 +60,10 @@ fn main() {
         None => vec![Path::new(".")],
     };
 
-    let mut walk_builder = {
-        let (first_path, other_paths) = root_paths.split_first().unwrap();
-        let mut walk_builder = WalkBuilder::new(first_path);
-        for other_path in other_paths {
-            walk_builder.add(other_path);
-        }
-        walk_builder
-    };
+    let mut walk_builder = WalkBuilder::new(root_paths[0]);
+    for root_path in root_paths.iter().skip(1) {
+        walk_builder.add(root_path);
+    }
     walk_builder
         .hidden(options.ignore_hidden)
         .follow_links(options.follow_links)
