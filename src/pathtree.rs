@@ -22,6 +22,9 @@ impl<'a> PathTree<'a> {
     }
 
     pub fn insert(&mut self, path: &'a Path) {
+        if self.roots.contains(path) {
+            return;
+        }
         let mut path = path;
         let ancestors = path.ancestors().skip(1);
         for parent in ancestors {
