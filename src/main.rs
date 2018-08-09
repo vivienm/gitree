@@ -86,7 +86,7 @@ fn main() {
     let walk = walk_builder.build();
 
     let entries: Vec<_> = walk.filter_map(Result::ok).collect();
-    let mut tree = PathTree::with_roots(root_paths.into_iter());
+    let mut tree = PathTree::with_roots(root_paths);
     entries.iter().for_each(|entry| {
         tree.insert(entry.path());
     });

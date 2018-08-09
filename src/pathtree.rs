@@ -13,10 +13,10 @@ impl<'a> PathTree<'a> {
 
     pub fn with_roots<I>(roots: I) -> Self
     where
-        I: Iterator<Item = &'a Path>,
+        I: IntoIterator<Item = &'a Path>,
     {
         PathTree {
-            roots: roots.collect(),
+            roots: roots.into_iter().collect(),
             children: HashMap::with_capacity(Self::MAP_CAPACITY),
         }
     }
