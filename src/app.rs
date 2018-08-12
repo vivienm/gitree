@@ -21,6 +21,12 @@ pub fn build_app() -> App<'static, 'static> {
                 .help("Follows symbolic links"),
         )
         .arg(
+            Arg::with_name("unsorted")
+                .long("--unsorted")
+                .short("U")
+                .help("Do not sort files"),
+        )
+        .arg(
             Arg::with_name("max_depth")
                 .long("depth")
                 .short("d")

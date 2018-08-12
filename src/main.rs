@@ -47,6 +47,10 @@ fn get_walk(path: &Path, options: &Options) -> ignore::Walk {
         walk_builder.overrides(overrides);
     }
 
+    if options.sort_files {
+        walk_builder.sort_by_file_name(|fn1, fn2| fn1.cmp(fn2));
+    }
+
     walk_builder.build()
 }
 
@@ -62,6 +66,7 @@ fn main() {
         ignore_hidden: !matches.is_present("hidden"),
         read_gitignore: !matches.is_present("no_gitignore"),
         follow_links: matches.is_present("follow_links"),
+        sort_files: !matches.is_present("unsorted"),
         max_depth: matches
             .value_of("max_depth")
             .and_then(|val| usize::from_str_radix(val, 10).ok()),

@@ -7,4 +7,5 @@ pub struct Options {
     pub max_depth: Option<usize>,
     pub exclude_patterns: Vec<String>,
     pub ls_colors: Option<LsColors>,
+    pub sort_files: bool,
 }
