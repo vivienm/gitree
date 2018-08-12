@@ -21,7 +21,7 @@ use app::build_app;
 use options::Options;
 use output::print_entry;
 use pathtree::TreeBuilder;
-use utils::{error, get_ls_colors};
+use utils::{error, file_name_sort, get_ls_colors};
 
 fn get_walk(path: &Path, options: &Options) -> ignore::Walk {
     let mut walk_builder = WalkBuilder::new(path);
@@ -48,7 +48,11 @@ fn get_walk(path: &Path, options: &Options) -> ignore::Walk {
     }
 
     if options.sort_files {
-        walk_builder.sort_by_file_name(|fn1, fn2| fn1.cmp(fn2));
+        walk_builder.sort_by_file_name(|fn1, fn2| {
+            let fn1 = file_name_sort(fn1);
+            let fn2 = file_name_sort(fn2);
+            fn1.cmp(&fn2)
+        });
     }
 
     walk_builder.build()
