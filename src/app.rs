@@ -24,7 +24,7 @@ pub fn build_app() -> App<'static, 'static> {
             Arg::with_name("unsorted")
                 .long("--unsorted")
                 .short("U")
-                .help("Do not sort files"),
+                .help("Does not sort files"),
         )
         .arg(
             Arg::with_name("max_depth")
