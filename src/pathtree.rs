@@ -1,74 +1,139 @@
-use std::collections::hash_map;
-use std::collections::{HashMap, HashSet};
 use std::path::Path;
 
-pub struct PathTree<'a> {
-    pub roots: HashSet<&'a Path>,
-    pub children: HashMap<&'a Path, HashSet<&'a Path>>,
+struct TreeNode<'a> {
+    path: &'a Path,
+    children: Vec<usize>,
 }
 
-impl<'a> PathTree<'a> {
-    const MAP_CAPACITY: usize = 256;
-    const SET_CAPACITY: usize = 16;
-
-    pub fn with_roots<I>(roots: I) -> Self
-    where
-        I: IntoIterator<Item = &'a Path>,
-    {
-        PathTree {
-            roots: roots.into_iter().collect(),
-            children: HashMap::with_capacity(Self::MAP_CAPACITY),
-        }
+impl<'a> TreeNode<'a> {
+    fn new(path: &'a Path, children: Vec<usize>) -> Self {
+        TreeNode { path, children }
     }
+}
 
-    pub fn insert(&mut self, path: &'a Path) {
-        if self.roots.contains(path) {
-            return;
-        }
-        let mut path = path;
-        let ancestors = path.ancestors().skip(1);
-        for parent in ancestors {
-            match self.children.entry(parent) {
-                hash_map::Entry::Occupied(mut entry) => {
-                    entry.get_mut().insert(path);
-                    return;
-                }
-                hash_map::Entry::Vacant(entry) => {
-                    let mut children = HashSet::with_capacity(Self::SET_CAPACITY);
-                    children.insert(path);
-                    entry.insert(children);
-                    path = parent;
-                }
-            }
-            if self.roots.contains(parent) {
-                return;
-            }
-        }
-    }
+pub struct Tree<'a> {
+    nodes: Vec<TreeNode<'a>>,
+}
 
-    fn _for_each(&self, func: &Fn(&Vec<bool>, &Path), prefixes: &mut Vec<bool>, path: &Path) {
-        func(&prefixes, path);
-        if let Some(children) = self.children.get(path) {
-            let mut children: Vec<_> = children.iter().collect();
-            children.sort();
-            let (last_child, first_children) = children.split_last().unwrap();
+impl<'a> Tree<'a> {
+    fn _for_each(&self, func: &Fn(&Vec<bool>, &Path), prefixes: &mut Vec<bool>, node: &TreeNode) {
+        func(&prefixes, &node.path);
+        if let Some((last_index, child_indices)) = node.children.split_last() {
             prefixes.push(false);
-            for child in first_children {
-                self._for_each(func, prefixes, child);
+            for child_index in child_indices {
+                self._for_each(func, prefixes, &self.nodes[*child_index]);
             }
-            prefixes.pop();
-            prefixes.push(true);
-            self._for_each(func, prefixes, last_child);
+            *prefixes.last_mut().unwrap() = true;
+            self._for_each(func, prefixes, &self.nodes[*last_index]);
             prefixes.pop();
         }
     }
 
     pub fn for_each(&self, func: &Fn(&Vec<bool>, &Path)) {
-        let mut prefixes = Vec::new();
-        let mut roots: Vec<_> = self.roots.iter().collect();
-        roots.sort();
-        for root in roots {
-            self._for_each(func, &mut prefixes, root);
+        let mut prefixes = vec![];
+        self._for_each(func, &mut prefixes, &self.nodes[0]);
+    }
+}
+
+pub struct TreeBuilder<'a> {
+    nodes: Vec<TreeNode<'a>>,
+    root_depth: usize,
+    indices: Vec<usize>,
+}
+
+impl<'a> TreeBuilder<'a> {
+    pub fn build(self) -> Tree<'a> {
+        Tree { nodes: self.nodes }
+    }
+
+    fn with_root(root_path: &'a Path) -> TreeBuilder<'a> {
+        let root_node = TreeNode::new(root_path, vec![]);
+        let root_depth = root_node.path.components().count();
+        TreeBuilder {
+            nodes: vec![root_node],
+            root_depth: root_depth,
+            indices: vec![0],
         }
+    }
+
+    pub fn from_paths<I>(paths: &mut I) -> Option<TreeBuilder<'a>>
+    where
+        I: Iterator<Item = &'a Path>,
+    {
+        let mut builder = match paths.next() {
+            None => {
+                return None;
+            }
+            Some(root_path) => Self::with_root(root_path),
+        };
+        for path in paths {
+            builder.push(path);
+        }
+        Some(builder)
+    }
+
+    pub fn push(&mut self, path: &'a Path) {
+        // At his point, we know that path is not a root.
+
+        let extra_depth = {
+            // Compute the number of common components from root.
+            let prev_node = &self.nodes[*self.indices.last().unwrap()];
+            let mut path_components = path.components().skip(self.root_depth);
+            let mut prev_components = prev_node.path.components().skip(self.root_depth);
+            let mut num_shared_components = 0;
+            loop {
+                match (prev_components.next(), path_components.next()) {
+                    (_, None) => {
+                        // Should not happend if insertion order is correct.
+                        unreachable!();
+                    }
+                    (Some(prev_component), Some(path_component)) => {
+                        if prev_component == path_component {
+                            num_shared_components += 1;
+                        } else {
+                            // Reached a different component.
+                            break;
+                        }
+                    }
+                    (None, Some(_)) => {
+                        // Path is a descendant of current node.
+                        break;
+                    }
+                }
+            }
+            // Go to the closest parent directory.
+            self.indices.truncate(num_shared_components + 1);
+            // Return the number of strict ancestors between the path and the
+            // current directory (0 if direct child).
+            path_components.count()
+        };
+
+        let num_nodes = self.nodes.len();
+        {
+            // Add a new child to the parent directory.
+            let prev_node = &mut self.nodes[*self.indices.last().unwrap()];
+            prev_node.children.push(num_nodes);
+        }
+
+        let path_index = num_nodes + extra_depth;
+
+        if extra_depth != 0 {
+            // Path is not a direct child of the previous entry, we need to
+            // add intermediate parents.
+            let mut extra_nodes = Vec::with_capacity(extra_depth);
+            let ancestors = path.ancestors().skip(1).take(extra_depth);
+            for (i, ancestor) in ancestors.enumerate() {
+                extra_nodes.push(TreeNode::new(ancestor, vec![path_index - i]));
+            }
+            extra_nodes.reverse();
+            self.nodes.append(&mut extra_nodes);
+            for i in 0..extra_depth {
+                self.indices.push(num_nodes + i);
+            }
+        }
+
+        let path_node = TreeNode::new(path, vec![]);
+        self.nodes.push(path_node);
+        self.indices.push(path_index);
     }
 }
