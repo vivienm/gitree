@@ -72,7 +72,7 @@ impl<'a> TreeBuilder<'a> {
         Some(builder)
     }
 
-    pub fn push(&mut self, path: &'a Path) {
+    fn push(&mut self, path: &'a Path) {
         // At his point, we know that path is not a root.
 
         let extra_depth = {
