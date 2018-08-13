@@ -70,6 +70,7 @@ fn main() {
         ignore_hidden: !matches.is_present("hidden"),
         read_gitignore: !matches.is_present("no_gitignore"),
         follow_links: matches.is_present("follow_links"),
+        full_path: matches.is_present("full_path"),
         sort_files: !matches.is_present("unsorted"),
         max_depth: matches
             .value_of("max_depth")

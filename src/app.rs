@@ -21,8 +21,14 @@ pub fn build_app() -> App<'static, 'static> {
                 .help("Follows symbolic links"),
         )
         .arg(
+            Arg::with_name("full_path")
+                .long("full-path")
+                .short("f")
+                .help("Prints the full path prefix for each file"),
+        )
+        .arg(
             Arg::with_name("unsorted")
-                .long("--unsorted")
+                .long("unsorted")
                 .short("U")
                 .help("Does not sort files"),
         )

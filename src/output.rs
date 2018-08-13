@@ -73,11 +73,23 @@ fn print_file(label: &str, path: &Path, options: &Options) {
     }
 }
 
+fn print_path(path: &Path, options: &Options) {
+    print_file(&path.display().to_string(), path, options);
+}
+
+fn print_file_name(path: &Path, options: &Options) {
+    print_file(&path.file_name().unwrap().to_string_lossy(), path, options);
+}
+
 pub fn print_entry(prefixes: &[bool], path: &Path, options: &Options) {
     if let Some((parent_prefix, ancestor_prefixes)) = prefixes.split_last() {
         print_prefixes(ancestor_prefixes, parent_prefix);
-        print_file(&path.file_name().unwrap().to_string_lossy(), path, options);
+        if options.full_path {
+            print_path(path, options);
+        } else {
+            print_file_name(path, options);
+        }
     } else {
-        print_file(&path.display().to_string(), path, options)
+        print_path(path, options);
     }
 }
