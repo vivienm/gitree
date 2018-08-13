@@ -5,7 +5,7 @@ use std::path::Path;
 use ansi_term;
 
 use lscolors::LsColors;
-use options::Options;
+use settings::Settings;
 
 fn is_executable(md: &fs::Metadata) -> bool {
     md.permissions().mode() & 0o111 != 0
@@ -63,7 +63,7 @@ fn print_prefixes(ancestor_prefixes: &[bool], parent_prefix: &bool) {
     }
 }
 
-fn print_file(label: &str, path: &Path, options: &Options) {
+fn print_file(label: &str, path: &Path, options: &Settings) {
     if let Some(ref ls_colors) = options.ls_colors {
         let default_style = ansi_term::Style::default();
         let style = get_path_style(path, ls_colors).unwrap_or(&default_style);
@@ -73,18 +73,18 @@ fn print_file(label: &str, path: &Path, options: &Options) {
     }
 }
 
-fn print_path(path: &Path, options: &Options) {
+fn print_path(path: &Path, options: &Settings) {
     print_file(&path.display().to_string(), path, options);
 }
 
-fn print_file_name(path: &Path, options: &Options) {
+fn print_file_name(path: &Path, options: &Settings) {
     print_file(&path.file_name().unwrap().to_string_lossy(), path, options);
 }
 
-pub fn print_entry(prefixes: &[bool], path: &Path, options: &Options) {
+pub fn print_entry(prefixes: &[bool], path: &Path, options: &Settings) {
     if let Some((parent_prefix, ancestor_prefixes)) = prefixes.split_last() {
         print_prefixes(ancestor_prefixes, parent_prefix);
-        if options.full_path {
+        if options.print_path {
             print_path(path, options);
         } else {
             print_file_name(path, options);
