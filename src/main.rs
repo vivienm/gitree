@@ -17,7 +17,7 @@ use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
 
 use app::build_app;
-use output::print_entry;
+use output::print_tree_item;
 use pathtree::TreeBuilder;
 use settings::Settings;
 use utils::{error, file_name_sort};
@@ -74,6 +74,6 @@ fn main() {
         let tree = TreeBuilder::from_paths(&mut direntries.iter().map(|e| e.path()))
             .unwrap()
             .build();
-        tree.for_each(&|prefixes, path| print_entry(prefixes, path, &settings));
+        tree.for_each(&|item| print_tree_item(item, &settings));
     }
 }

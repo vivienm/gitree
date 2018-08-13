@@ -5,6 +5,7 @@ use std::path::Path;
 use ansi_term;
 
 use lscolors::LsColors;
+use pathtree::TreeItem;
 use settings::Settings;
 
 fn is_executable(md: &fs::Metadata) -> bool {
@@ -48,22 +49,22 @@ const PREFIX_VERT: &'static str = "│   ";
 const PREFIX_TEE: &'static str = "├── ";
 const PREFIX_LAST: &'static str = "└── ";
 
-fn print_prefixes(ancestor_prefixes: &[bool], parent_prefix: &bool) {
-    for ancestor_prefix in ancestor_prefixes {
+fn print_indents(ancestor_indents: &[bool], parent_indent: &bool) {
+    for ancestor_prefix in ancestor_indents {
         if *ancestor_prefix {
             print!("{}", PREFIX_EMPTY);
         } else {
             print!("{}", PREFIX_VERT);
         }
     }
-    if *parent_prefix {
+    if *parent_indent {
         print!("{}", PREFIX_LAST);
     } else {
         print!("{}", PREFIX_TEE);
     }
 }
 
-fn print_file(label: &str, path: &Path, options: &Settings) {
+fn print_file_with_label(label: &str, path: &Path, options: &Settings) {
     if let Some(ref ls_colors) = options.ls_colors {
         let default_style = ansi_term::Style::default();
         let style = get_path_style(path, ls_colors).unwrap_or(&default_style);
@@ -74,22 +75,22 @@ fn print_file(label: &str, path: &Path, options: &Settings) {
 }
 
 fn print_path(path: &Path, options: &Settings) {
-    print_file(&path.display().to_string(), path, options);
+    print_file_with_label(&path.display().to_string(), path, options);
 }
 
 fn print_file_name(path: &Path, options: &Settings) {
-    print_file(&path.file_name().unwrap().to_string_lossy(), path, options);
+    print_file_with_label(&path.file_name().unwrap().to_string_lossy(), path, options);
 }
 
-pub fn print_entry(prefixes: &[bool], path: &Path, options: &Settings) {
-    if let Some((parent_prefix, ancestor_prefixes)) = prefixes.split_last() {
-        print_prefixes(ancestor_prefixes, parent_prefix);
+pub fn print_tree_item(item: &TreeItem, options: &Settings) {
+    if let Some((parent_indent, ancestor_indents)) = item.indents.split_last() {
+        print_indents(ancestor_indents, parent_indent);
         if options.print_path {
-            print_path(path, options);
+            print_path(item.path, options);
         } else {
-            print_file_name(path, options);
+            print_file_name(item.path, options);
         }
     } else {
-        print_path(path, options);
+        print_path(item.path, options);
     }
 }

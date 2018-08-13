@@ -11,27 +11,41 @@ impl<'a> TreeNode<'a> {
     }
 }
 
+pub struct TreeItem<'a> {
+    pub indents: &'a mut Vec<bool>,
+    pub path: &'a Path,
+}
+
 pub struct Tree<'a> {
     nodes: Vec<TreeNode<'a>>,
 }
 
 impl<'a> Tree<'a> {
-    fn _for_each(&self, func: &Fn(&Vec<bool>, &Path), prefixes: &mut Vec<bool>, node: &TreeNode) {
-        func(&prefixes, &node.path);
-        if let Some((last_index, child_indices)) = node.children.split_last() {
-            prefixes.push(false);
-            for child_index in child_indices {
-                self._for_each(func, prefixes, &self.nodes[*child_index]);
+    fn _for_each(&self, func: &Fn(&TreeItem), node: &TreeNode, item: &mut TreeItem<'a>) {
+        func(item);
+        if let Some((last_index, first_indices)) = node.children.split_last() {
+            item.indents.push(false);
+            for child_index in first_indices {
+                let child_node = &self.nodes[*child_index];
+                item.path = child_node.path;
+                self._for_each(func, child_node, item);
             }
-            *prefixes.last_mut().unwrap() = true;
-            self._for_each(func, prefixes, &self.nodes[*last_index]);
-            prefixes.pop();
+            *item.indents.last_mut().unwrap() = true;
+            let child_node = &self.nodes[*last_index];
+            item.path = child_node.path;
+            self._for_each(func, child_node, item);
+            item.indents.pop();
         }
     }
 
-    pub fn for_each(&self, func: &Fn(&Vec<bool>, &Path)) {
-        let mut prefixes = vec![];
-        self._for_each(func, &mut prefixes, &self.nodes[0]);
+    pub fn for_each(&self, func: &Fn(&TreeItem)) {
+        let root_node = &self.nodes[0];
+        let mut indents = Vec::with_capacity(16);
+        let mut item = TreeItem {
+            indents: &mut indents,
+            path: &root_node.path,
+        };
+        self._for_each(func, &root_node, &mut item);
     }
 }
 
