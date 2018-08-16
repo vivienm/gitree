@@ -48,11 +48,9 @@ pub fn compare_file_names(file_name_1: &OsStr, file_name_2: &OsStr) -> Ordering 
                 let byte_2 = byte_2.to_ascii_lowercase();
                 if byte_1 < byte_2 {
                     return Ordering::Less;
-                }
-                else if byte_1 > byte_2 {
+                } else if byte_1 > byte_2 {
                     return Ordering::Greater;
-                }
-                else {
+                } else {
                     byte_1_opt = bytes_1.next();
                     byte_2_opt = bytes_2.next();
                 }
