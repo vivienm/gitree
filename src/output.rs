@@ -48,21 +48,23 @@ fn test_write_indents() {
     assert_eq!(write_string(&[true, false], true), "    │   └── ");
 }
 
+fn is_symlink(md: &fs::Metadata) -> bool {
+    md.file_type().is_symlink()
+}
+
 fn is_executable(md: &fs::Metadata) -> bool {
     md.permissions().mode() & 0o111 != 0
 }
 
-fn get_path_style<'a>(path: &Path, ls_colors: &'a LsColors) -> Option<&'a ansi_term::Style> {
-    if path
-        .symlink_metadata()
-        .map(|md| md.file_type().is_symlink())
-        .unwrap_or(false)
-    {
+fn get_path_style<'a>(
+    path: &Path,
+    is_symlink: bool,
+    ls_colors: &'a LsColors,
+) -> Option<&'a ansi_term::Style> {
+    if is_symlink {
         return Some(&ls_colors.symlink);
     }
-
     let metadata = path.metadata();
-
     if metadata.as_ref().map(|md| md.is_dir()).unwrap_or(false) {
         Some(&ls_colors.directory)
     } else if metadata.map(|md| is_executable(&md)).unwrap_or(false) {
@@ -84,30 +86,42 @@ fn get_path_style<'a>(path: &Path, ls_colors: &'a LsColors) -> Option<&'a ansi_t
     }
 }
 
-fn write_file_with_label(
+fn write_file_line(
     output: &mut Write,
-    label: &str,
     path: &Path,
+    label: &str,
     settings: &Settings,
 ) -> io::Result<()> {
+    let is_symlink = path
+        .symlink_metadata()
+        .map(|md| is_symlink(&md))
+        .unwrap_or(false);
     if let Some(ref ls_colors) = settings.ls_colors {
-        let default_style = ansi_term::Style::default();
-        let style = get_path_style(path, ls_colors).unwrap_or(&default_style);
-        writeln!(output, "{}", style.paint(label))
+        if let Some(style) = get_path_style(path, is_symlink, ls_colors) {
+            write!(output, "{}", style.paint(label))?;
+        } else {
+            write!(output, "{}", label)?;
+        }
     } else {
-        writeln!(output, "{}", label)
+        write!(output, "{}", label)?;
     }
+    if is_symlink {
+        if let Some(target) = fs::read_link(path).ok() {
+            write!(output, " -> {}", target.display())?;
+        }
+    }
+    writeln!(output)
 }
 
 fn write_path(output: &mut Write, path: &Path, settings: &Settings) -> io::Result<()> {
-    write_file_with_label(output, &path.display().to_string(), path, settings)
+    write_file_line(output, path, &path.display().to_string(), settings)
 }
 
 fn write_file_name(output: &mut Write, path: &Path, settings: &Settings) -> io::Result<()> {
-    write_file_with_label(
+    write_file_line(
         output,
-        &path.file_name().unwrap().to_string_lossy(),
         path,
+        &path.file_name().unwrap().to_string_lossy(),
         settings,
     )
 }
