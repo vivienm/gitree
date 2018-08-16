@@ -88,9 +88,9 @@ fn write_file_with_label(
     output: &mut Write,
     label: &str,
     path: &Path,
-    options: &Settings,
+    settings: &Settings,
 ) -> io::Result<()> {
-    if let Some(ref ls_colors) = options.ls_colors {
+    if let Some(ref ls_colors) = settings.ls_colors {
         let default_style = ansi_term::Style::default();
         let style = get_path_style(path, ls_colors).unwrap_or(&default_style);
         writeln!(output, "{}", style.paint(label))
@@ -99,28 +99,28 @@ fn write_file_with_label(
     }
 }
 
-fn write_path(output: &mut Write, path: &Path, options: &Settings) -> io::Result<()> {
-    write_file_with_label(output, &path.display().to_string(), path, options)
+fn write_path(output: &mut Write, path: &Path, settings: &Settings) -> io::Result<()> {
+    write_file_with_label(output, &path.display().to_string(), path, settings)
 }
 
-fn write_file_name(output: &mut Write, path: &Path, options: &Settings) -> io::Result<()> {
+fn write_file_name(output: &mut Write, path: &Path, settings: &Settings) -> io::Result<()> {
     write_file_with_label(
         output,
         &path.file_name().unwrap().to_string_lossy(),
         path,
-        options,
+        settings,
     )
 }
 
-pub fn write_tree_item(output: &mut Write, item: &TreeItem, options: &Settings) -> io::Result<()> {
+pub fn write_tree_item(output: &mut Write, item: &TreeItem, settings: &Settings) -> io::Result<()> {
     if let Some((parent_indent, ancestor_indents)) = item.indents.split_last() {
         write_indents(&mut io::stdout(), ancestor_indents, *parent_indent).unwrap();
-        if options.print_path {
-            write_path(output, item.path, options)
+        if settings.print_path {
+            write_path(output, item.path, settings)
         } else {
-            write_file_name(output, item.path, options)
+            write_file_name(output, item.path, settings)
         }
     } else {
-        write_path(output, item.path, options)
+        write_path(output, item.path, settings)
     }
 }
