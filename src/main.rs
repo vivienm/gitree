@@ -20,7 +20,7 @@ use app::build_app;
 use output::print_tree_item;
 use pathtree::TreeBuilder;
 use settings::Settings;
-use utils::{error, file_name_sort};
+use utils::{compare_file_names, error};
 
 fn get_walk(path: &Path, settings: &Settings) -> ignore::Walk {
     let mut walk_builder = WalkBuilder::new(path);
@@ -50,11 +50,7 @@ fn get_walk(path: &Path, settings: &Settings) -> ignore::Walk {
     }
 
     if settings.sort_files {
-        walk_builder.sort_by_file_name(|fn1, fn2| {
-            let fn1 = file_name_sort(fn1);
-            let fn2 = file_name_sort(fn2);
-            fn1.cmp(&fn2)
-        });
+        walk_builder.sort_by_file_name(&compare_file_names);
     }
 
     walk_builder.build()
