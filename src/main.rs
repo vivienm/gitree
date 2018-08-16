@@ -12,6 +12,7 @@ mod settings;
 mod utils;
 
 use std::path::Path;
+use std::process;
 
 use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
@@ -20,7 +21,12 @@ use app::build_app;
 use output::print_tree_item;
 use pathtree::TreeBuilder;
 use settings::Settings;
-use utils::{compare_file_names, error};
+use utils::compare_file_names;
+
+fn error(message: &str) -> ! {
+    eprintln!("{}", message);
+    process::exit(1);
+}
 
 fn get_walk(path: &Path, settings: &Settings) -> ignore::Walk {
     let mut walk_builder = WalkBuilder::new(path);

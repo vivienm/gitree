@@ -2,7 +2,6 @@ use std::cmp::Ordering;
 use std::env;
 use std::ffi::OsStr;
 use std::os::unix::ffi::OsStrExt;
-use std::process;
 
 use lscolors::LsColors;
 
@@ -13,11 +12,6 @@ pub fn get_ls_colors() -> LsColors {
         .ok()
         .map(|val| LsColors::from_string(&val))
         .unwrap_or_default()
-}
-
-pub fn error(message: &str) -> ! {
-    eprintln!("{}", message);
-    process::exit(1);
 }
 
 pub fn compare_file_names(file_name_1: &OsStr, file_name_2: &OsStr) -> Ordering {
