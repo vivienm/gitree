@@ -11,6 +11,7 @@ mod pathtree;
 mod settings;
 mod utils;
 
+use std::io;
 use std::path::Path;
 use std::process;
 
@@ -18,7 +19,7 @@ use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
 
 use app::build_app;
-use output::print_tree_item;
+use output::write_tree_item;
 use pathtree::TreeBuilder;
 use settings::Settings;
 use utils::compare_file_names;
@@ -70,12 +71,15 @@ fn main() {
         None => vec![Path::new(".")],
     };
 
+    let mut stdout = io::stdout();
     for root_path in root_paths {
         let walk = get_walk(root_path, &settings);
         let direntries: Vec<_> = walk.filter_map(|e| e.ok()).collect();
         let tree = TreeBuilder::from_paths(&mut direntries.iter().map(|e| e.path()))
             .unwrap()
             .build();
-        tree.for_each(&|item| print_tree_item(item, &settings));
+        tree.for_each(&mut |item| {
+            let _ = write_tree_item(&mut stdout, item, &settings);
+        });
     }
 }
