@@ -9,10 +9,10 @@ use lscolors::LsColors;
 use pathtree::TreeItem;
 use settings::Settings;
 
-const INDENT_EMPTY: &'static str = "    ";
-const INDENT_BAR: &'static str = "│   ";
-const INDENT_TEE: &'static str = "├── ";
-const INDENT_ELL: &'static str = "└── ";
+const INDENT_EMPTY: &str = "    ";
+const INDENT_BAR: &str = "│   ";
+const INDENT_TEE: &str = "├── ";
+const INDENT_ELL: &str = "└── ";
 
 fn write_indents<W: Write>(
     output: &mut W,
@@ -106,7 +106,7 @@ fn write_file_line(
         write!(output, "{}", label)?;
     }
     if is_symlink {
-        if let Some(target) = fs::read_link(path).ok() {
+        if let Ok(target) = fs::read_link(path) {
             write!(output, " -> {}", target.display())?;
         }
     }

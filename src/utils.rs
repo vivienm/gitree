@@ -7,8 +7,8 @@ use lscolors::LsColors;
 
 pub fn get_ls_colors() -> LsColors {
     env::var("GITREE_COLORS")
-        .or(env::var("TREE_COLORS"))
-        .or(env::var("LS_COLORS"))
+        .or_else(|_| env::var("TREE_COLORS"))
+        .or_else(|_| env::var("LS_COLORS"))
         .ok()
         .map(|val| LsColors::from_string(&val))
         .unwrap_or_default()
@@ -20,10 +20,10 @@ pub fn compare_file_names(file_name_1: &OsStr, file_name_2: &OsStr) -> Ordering 
     // Strip initial dot.
     let mut byte_1_opt = bytes_1.next();
     let mut byte_2_opt = bytes_2.next();
-    if *byte_1_opt.unwrap() == '.' as u8 {
+    if *byte_1_opt.unwrap() == b'.' {
         byte_1_opt = bytes_1.next();
     }
-    if *byte_2_opt.unwrap() == '.' as u8 {
+    if *byte_2_opt.unwrap() == b'.' {
         byte_2_opt = bytes_2.next();
     }
     loop {

@@ -65,7 +65,7 @@ impl<'a> TreeBuilder<'a> {
         let root_depth = root_node.path.components().count();
         TreeBuilder {
             nodes: vec![root_node],
-            root_depth: root_depth,
+            root_depth,
             indices: vec![0],
         }
     }
