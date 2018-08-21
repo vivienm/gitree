@@ -2,7 +2,7 @@
 name = "gitree"
 version = "0.1.0"
 authors = ["Vivien Maisonneuve <v.maisonneuve@gmail.com>"]
-description = "Print a directory tree without files ignored by Git."
+description = "Print a directory tree while respecting gitignore rules."
 license = "MIT"
 build = "build.rs"
 
