@@ -1,11 +1,14 @@
 # Gitree
 
-Gitree is a shell tool that prints a directory tree while respecting gitignore
-rules.
+Gitree is a shell tool that prints a directory tree
+while respecting gitignore rules.
 
-Gitree is just a small personal project to learn some Rust! If you are looking
-for a tool with a tree view and support for gitignore files, you might be
-interested in [exa](https://the.exa.website/).
+Gitree is just a small personal project to learn some Rust :)
+If you are looking for a listing tool
+with a tree view and support for gitignore rules,
+you might be interested in [exa][exa].
+
+[exa]: https://the.exa.website
 
 ## Screenshot
 
