@@ -24,7 +24,7 @@ use pathtree::TreeBuilder;
 use settings::Settings;
 use utils::compare_file_names;
 
-fn error(message: &str) -> ! {
+fn fatal(message: &str) -> ! {
     eprintln!("{}", message);
     process::exit(1);
 }
@@ -47,11 +47,11 @@ fn get_walk(path: &Path, settings: &Settings) -> ignore::Walk {
             .unwrap();
         for pattern in &settings.include_patterns {
             override_builder.add(pattern).unwrap_or_else(|err| {
-                error(&format!("Invalid pattern {:?}: {}", pattern, err));
+                fatal(&format!("Invalid pattern {:?}: {}", pattern, err));
             });
         }
         let overrides = override_builder.build().unwrap_or_else(|err| {
-            error(&format!("Invalid patterns: {}", err));
+            fatal(&format!("Invalid patterns: {}", err));
         });
         walk_builder.overrides(overrides);
     }
