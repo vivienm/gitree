@@ -4,6 +4,9 @@ version = "0.1.0"
 authors = ["Vivien Maisonneuve <v.maisonneuve@gmail.com>"]
 description = "Print a directory tree while respecting gitignore rules."
 license = "MIT"
+homepage = "https://gitlab.com/vmaison/gitree"
+repository = "https://gitlab.com/vmaison/gitree"
+readme = "README.md"
 build = "build.rs"
 
 [dependencies]
