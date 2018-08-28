@@ -1,11 +1,10 @@
 use std::fs;
 use std::io::{self, Write};
 use std::os::unix::fs::PermissionsExt;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use ansi_term;
 
-use lscolors::LsColors;
 use pathtree::TreeItem;
 use settings::Settings;
 
@@ -48,39 +47,55 @@ fn test_write_indents() {
     assert_eq!(write_string(&[true, false], true), "    │   └── ");
 }
 
-fn is_symlink(md: &fs::Metadata) -> bool {
-    md.file_type().is_symlink()
+enum FileInfo {
+    SymLink { target: PathBuf },
+    Directory,
+    File { executable: bool },
 }
 
-fn is_executable(md: &fs::Metadata) -> bool {
-    md.permissions().mode() & 0o111 != 0
+impl FileInfo {
+    fn from_path(path: &Path) -> io::Result<Self> {
+        let metadata = path.symlink_metadata()?;
+        if metadata.file_type().is_symlink() {
+            let target = fs::read_link(path)?;
+            Ok(FileInfo::SymLink { target })
+        } else if metadata.is_dir() {
+            Ok(FileInfo::Directory)
+        } else {
+            let executable = metadata.permissions().mode() & 0o111 != 0;
+            Ok(FileInfo::File { executable })
+        }
+    }
 }
 
 fn get_path_style<'a>(
     path: &Path,
-    is_symlink: bool,
-    ls_colors: &'a LsColors,
+    info: &FileInfo,
+    settings: &'a Settings,
 ) -> Option<&'a ansi_term::Style> {
-    if is_symlink {
-        return Some(&ls_colors.symlink);
-    }
-    let metadata = path.metadata();
-    if metadata.as_ref().map(|md| md.is_dir()).unwrap_or(false) {
-        Some(&ls_colors.directory)
-    } else if metadata.map(|md| is_executable(&md)).unwrap_or(false) {
-        Some(&ls_colors.executable)
-    } else if let Some(filename_style) = path
-        .file_name()
-        .and_then(|n| n.to_str())
-        .and_then(|n| ls_colors.filenames.get(n))
-    {
-        Some(filename_style)
-    } else if let Some(extension_style) = path
-        .extension()
-        .and_then(|e| e.to_str())
-        .and_then(|e| ls_colors.extensions.get(e))
-    {
-        Some(extension_style)
+    if let Some(ref ls_colors) = settings.ls_colors {
+        match info {
+            FileInfo::SymLink { target: _ } => Some(&ls_colors.symlink),
+            FileInfo::Directory => Some(&ls_colors.directory),
+            FileInfo::File { executable: true } => Some(&ls_colors.executable),
+            FileInfo::File { executable: false } => {
+                if let Some(filename_style) = path
+                    .file_name()
+                    .and_then(|filename| filename.to_str())
+                    .and_then(|filename| ls_colors.filenames.get(filename))
+                {
+                    Some(filename_style)
+                } else if let Some(extension_style) = path
+                    .extension()
+                    .and_then(|extension| extension.to_str())
+                    .and_then(|extension| ls_colors.extensions.get(extension))
+                {
+                    Some(extension_style)
+                } else {
+                    None
+                }
+            }
+        }
     } else {
         None
     }
@@ -92,23 +107,14 @@ fn write_file_line(
     label: &str,
     settings: &Settings,
 ) -> io::Result<()> {
-    let is_symlink = path
-        .symlink_metadata()
-        .map(|md| is_symlink(&md))
-        .unwrap_or(false);
-    if let Some(ref ls_colors) = settings.ls_colors {
-        if let Some(style) = get_path_style(path, is_symlink, ls_colors) {
-            write!(output, "{}", style.paint(label))?;
-        } else {
-            write!(output, "{}", label)?;
-        }
+    let info = FileInfo::from_path(path)?;
+    if let Some(style) = get_path_style(path, &info, settings) {
+        write!(output, "{}", style.paint(label))?;
     } else {
         write!(output, "{}", label)?;
     }
-    if is_symlink {
-        if let Ok(target) = fs::read_link(path) {
-            write!(output, " -> {}", target.display())?;
-        }
+    if let FileInfo::SymLink { target } = info {
+        write!(output, " -> {}", target.display())?;
     }
     writeln!(output)
 }
