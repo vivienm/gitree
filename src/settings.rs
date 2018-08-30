@@ -27,6 +27,9 @@ pub struct Settings {
     // Sort files.
     pub sort_files: bool,
 
+    // Report files and directories.
+    pub report: bool,
+
     // Color codes.
     pub ls_colors: Option<LsColors>,
 }
@@ -56,6 +59,7 @@ impl Settings {
             include_patterns: patterns,
             ignore_case: matches.is_present("ignore_case"),
             sort_files: !matches.is_present("no_sort_files"),
+            report: !matches.is_present("no_report"),
             ls_colors: {
                 if colored_output {
                     Some(get_ls_colors())

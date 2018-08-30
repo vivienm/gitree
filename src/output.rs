@@ -6,6 +6,7 @@ use std::path::{Path, PathBuf};
 use ansi_term;
 
 use pathtree::TreeItem;
+use report::Report;
 use settings::Settings;
 
 const INDENT_EMPTY: &str = "    ";
@@ -75,7 +76,7 @@ fn get_path_style<'a>(
 ) -> Option<&'a ansi_term::Style> {
     if let Some(ref ls_colors) = settings.ls_colors {
         match info {
-            FileInfo::SymLink { target: _ } => Some(&ls_colors.symlink),
+            FileInfo::SymLink { .. } => Some(&ls_colors.symlink),
             FileInfo::Directory => Some(&ls_colors.directory),
             FileInfo::File { executable: true } => Some(&ls_colors.executable),
             FileInfo::File { executable: false } => {
@@ -103,11 +104,16 @@ fn get_path_style<'a>(
 
 fn write_file_line(
     output: &mut Write,
+    report: &mut Report,
     path: &Path,
     label: &str,
     settings: &Settings,
 ) -> io::Result<()> {
     let info = FileInfo::from_path(path)?;
+    match info {
+        FileInfo::Directory => report.add_dir(),
+        FileInfo::SymLink { .. } | FileInfo::File { .. } => report.add_file(),
+    };
     if let Some(style) = get_path_style(path, &info, settings) {
         write!(output, "{}", style.paint(label))?;
     } else {
@@ -119,28 +125,44 @@ fn write_file_line(
     writeln!(output)
 }
 
-fn write_path(output: &mut Write, path: &Path, settings: &Settings) -> io::Result<()> {
-    write_file_line(output, path, &path.display().to_string(), settings)
+fn write_path(
+    output: &mut Write,
+    report: &mut Report,
+    path: &Path,
+    settings: &Settings,
+) -> io::Result<()> {
+    write_file_line(output, report, path, &path.display().to_string(), settings)
 }
 
-fn write_file_name(output: &mut Write, path: &Path, settings: &Settings) -> io::Result<()> {
+fn write_file_name(
+    output: &mut Write,
+    report: &mut Report,
+    path: &Path,
+    settings: &Settings,
+) -> io::Result<()> {
     write_file_line(
         output,
+        report,
         path,
         &path.file_name().unwrap().to_string_lossy(),
         settings,
     )
 }
 
-pub fn write_tree_item(output: &mut Write, item: &TreeItem, settings: &Settings) -> io::Result<()> {
+pub fn write_tree_item(
+    output: &mut Write,
+    report: &mut Report,
+    item: &TreeItem,
+    settings: &Settings,
+) -> io::Result<()> {
     if let Some((parent_indent, ancestor_indents)) = item.indents.split_last() {
         write_indents(&mut io::stdout(), ancestor_indents, *parent_indent).unwrap();
         if settings.print_path {
-            write_path(output, item.path, settings)
+            write_path(output, report, item.path, settings)
         } else {
-            write_file_name(output, item.path, settings)
+            write_file_name(output, report, item.path, settings)
         }
     } else {
-        write_path(output, item.path, settings)
+        write_path(output, report, item.path, settings)
     }
 }

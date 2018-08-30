@@ -8,10 +8,11 @@ mod app;
 mod lscolors;
 mod output;
 mod pathtree;
+mod report;
 mod settings;
 mod utils;
 
-use std::io;
+use std::io::{self, Write};
 use std::path::Path;
 use std::process;
 
@@ -21,6 +22,7 @@ use ignore::WalkBuilder;
 use app::build_app;
 use output::write_tree_item;
 use pathtree::TreeBuilder;
+use report::Report;
 use settings::Settings;
 use utils::compare_file_names;
 
@@ -63,6 +65,24 @@ fn get_walk(path: &Path, settings: &Settings) -> ignore::Walk {
     walk_builder.build()
 }
 
+fn tree<'a, W: Write>(output: &mut W, paths: Vec<&'a Path>, settings: &Settings) {
+    let mut report = Report::new();
+    for root_path in paths {
+        let walk = get_walk(root_path, &settings);
+        let direntries: Vec<_> = walk.filter_map(|e| e.ok()).collect();
+        let tree = TreeBuilder::from_paths(&mut direntries.iter().map(|e| e.path()))
+            .unwrap()
+            .build();
+        tree.for_each(&mut |item| {
+            let _ = write_tree_item(output, &mut report, item, &settings);
+        });
+    }
+    if settings.report {
+        writeln!(output);
+        writeln!(output, "{}", report);
+    }
+}
+
 fn main() {
     let matches = build_app().get_matches();
     let settings = Settings::from_matches(&matches);
@@ -72,14 +92,5 @@ fn main() {
     };
 
     let mut stdout = io::stdout();
-    for root_path in root_paths {
-        let walk = get_walk(root_path, &settings);
-        let direntries: Vec<_> = walk.filter_map(|e| e.ok()).collect();
-        let tree = TreeBuilder::from_paths(&mut direntries.iter().map(|e| e.path()))
-            .unwrap()
-            .build();
-        tree.for_each(&mut |item| {
-            let _ = write_tree_item(&mut stdout, item, &settings);
-        });
-    }
+    tree(&mut stdout, root_paths, &settings);
 }

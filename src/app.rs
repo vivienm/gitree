@@ -63,6 +63,12 @@ pub fn build_app() -> App<'static, 'static> {
                 .help("Does not sort files"),
         )
         .arg(
+            Arg::with_name("no_report")
+                .long("no-report")
+                .short("R")
+                .help("Does not print the file and directory report"),
+        )
+        .arg(
             Arg::with_name("color")
                 .long("color")
                 .short("c")
