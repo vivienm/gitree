@@ -80,6 +80,7 @@ pub fn build_app() -> App<'static, 'static> {
         .arg(
             Arg::with_name("directory")
                 .value_name("DIRECTORY")
-                .multiple(true),
+                .multiple(true)
+                .help("Directories to process"),
         )
 }
