@@ -5,7 +5,7 @@ authors = ["Vivien Maisonneuve <v.maisonneuve@gmail.com>"]
 description = "Print a directory tree while respecting gitignore rules."
 license = "MIT"
 homepage = "https://gitlab.com/vmaison/gitree"
-repository = "https://gitlab.com/vmaison/gitree"
+repository = "https://gitlab.com/vmaison/gitree.git"
 readme = "README.md"
 build = "build.rs"
 
