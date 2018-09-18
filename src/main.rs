@@ -65,7 +65,10 @@ fn get_walk(path: &Path, settings: &Settings) -> ignore::Walk {
     walk_builder.build()
 }
 
-fn tree<'a, W: Write>(output: &mut W, paths: Vec<&'a Path>, settings: &Settings) -> io::Result<()> {
+fn tree<'a, W>(output: &mut W, paths: Vec<&'a Path>, settings: &Settings) -> io::Result<()>
+where
+    W: Write,
+{
     let mut report = Report::new();
     for root_path in paths {
         let walk = get_walk(root_path, &settings);

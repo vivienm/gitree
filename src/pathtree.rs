@@ -21,12 +21,15 @@ pub struct Tree<'a> {
 }
 
 impl<'a> Tree<'a> {
-    fn _for_each<E>(
+    fn _for_each<E, F>(
         &self,
-        func: &mut FnMut(&TreeItem) -> Result<(), E>,
+        func: &mut F,
         node: &TreeNode,
         item: &mut TreeItem<'a>,
-    ) -> Result<(), E> {
+    ) -> Result<(), E>
+    where
+        F: FnMut(&TreeItem) -> Result<(), E>,
+    {
         func(item)?;
         if let Some((last_index, first_indices)) = node.children.split_last() {
             item.indents.push(false);
@@ -44,7 +47,10 @@ impl<'a> Tree<'a> {
         Ok(())
     }
 
-    pub fn for_each<E>(&self, func: &mut FnMut(&TreeItem) -> Result<(), E>) -> Result<(), E> {
+    pub fn for_each<E, F>(&self, func: &mut F) -> Result<(), E>
+    where
+        F: FnMut(&TreeItem) -> Result<(), E>,
+    {
         let root_node = &self.nodes[0];
         let mut indents = Vec::with_capacity(16);
         let mut item = TreeItem {

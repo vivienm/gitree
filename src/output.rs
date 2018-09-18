@@ -102,13 +102,16 @@ fn get_path_style<'a>(
     }
 }
 
-fn write_file_line(
-    output: &mut Write,
+fn write_file_line<W>(
+    output: &mut W,
     report: &mut Report,
     path: &Path,
     label: &str,
     settings: &Settings,
-) -> io::Result<()> {
+) -> io::Result<()>
+where
+    W: Write,
+{
     let info = FileInfo::from_path(path)?;
     match info {
         FileInfo::Directory => report.add_dir(),
@@ -125,21 +128,27 @@ fn write_file_line(
     writeln!(output)
 }
 
-fn write_path(
-    output: &mut Write,
+fn write_path<W>(
+    output: &mut W,
     report: &mut Report,
     path: &Path,
     settings: &Settings,
-) -> io::Result<()> {
+) -> io::Result<()>
+where
+    W: Write,
+{
     write_file_line(output, report, path, &path.display().to_string(), settings)
 }
 
-fn write_file_name(
-    output: &mut Write,
+fn write_file_name<W>(
+    output: &mut W,
     report: &mut Report,
     path: &Path,
     settings: &Settings,
-) -> io::Result<()> {
+) -> io::Result<()>
+where
+    W: Write,
+{
     write_file_line(
         output,
         report,
@@ -149,12 +158,15 @@ fn write_file_name(
     )
 }
 
-pub fn write_tree_item(
-    output: &mut Write,
+pub fn write_tree_item<W>(
+    output: &mut W,
     report: &mut Report,
     item: &TreeItem,
     settings: &Settings,
-) -> io::Result<()> {
+) -> io::Result<()>
+where
+    W: Write,
+{
     if let Some((parent_indent, ancestor_indents)) = item.indents.split_last() {
         write_indents(&mut io::stdout(), ancestor_indents, *parent_indent).unwrap();
         if settings.print_path {
