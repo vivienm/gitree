@@ -12,6 +12,8 @@ mod report;
 mod settings;
 mod utils;
 
+use std::error;
+use std::fmt;
 use std::io::{self, Write};
 use std::path::Path;
 use std::process;
@@ -26,12 +28,24 @@ use report::Report;
 use settings::Settings;
 use utils::compare_file_names;
 
-fn fatal(message: &str) -> ! {
-    eprintln!("{}", message);
-    process::exit(1);
+#[derive(Debug)]
+enum Error {
+    Ignore(ignore::Error),
+    Io(io::Error),
 }
 
-fn get_walk(path: &Path, settings: &Settings) -> ignore::Walk {
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Error::Ignore(err) => write!(f, "{}", err),
+            Error::Io(err) => write!(f, "{}", err),
+        }
+    }
+}
+
+impl error::Error for Error {}
+
+fn get_walk(path: &Path, settings: &Settings) -> Result<ignore::Walk, ignore::Error> {
     let mut walk_builder = WalkBuilder::new(path);
     walk_builder
         .hidden(settings.print_hidden)
@@ -44,17 +58,11 @@ fn get_walk(path: &Path, settings: &Settings) -> ignore::Walk {
 
     if !settings.include_patterns.is_empty() {
         let mut override_builder = OverrideBuilder::new(path);
-        override_builder
-            .case_insensitive(settings.ignore_case)
-            .unwrap();
+        override_builder.case_insensitive(settings.ignore_case)?;
         for pattern in &settings.include_patterns {
-            override_builder.add(pattern).unwrap_or_else(|err| {
-                fatal(&format!("Invalid pattern {:?}: {}", pattern, err));
-            });
+            override_builder.add(pattern)?;
         }
-        let overrides = override_builder.build().unwrap_or_else(|err| {
-            fatal(&format!("Invalid patterns: {}", err));
-        });
+        let overrides = override_builder.build()?;
         walk_builder.overrides(overrides);
     }
 
@@ -62,25 +70,25 @@ fn get_walk(path: &Path, settings: &Settings) -> ignore::Walk {
         walk_builder.sort_by_file_name(&compare_file_names);
     }
 
-    walk_builder.build()
+    Ok(walk_builder.build())
 }
 
-fn tree<'a, W>(output: &mut W, paths: Vec<&'a Path>, settings: &Settings) -> io::Result<()>
+fn tree<'a, W>(output: &mut W, paths: Vec<&'a Path>, settings: &Settings) -> Result<(), Error>
 where
     W: Write,
 {
     let mut report = Report::new();
     for root_path in paths {
-        let walk = get_walk(root_path, &settings);
-        let direntries: Vec<_> = walk.filter_map(|e| e.ok()).collect();
+        let walk = get_walk(root_path, &settings).map_err(Error::Ignore)?;
+        let direntries = walk.collect::<Result<Vec<_>, _>>().map_err(Error::Ignore)?;
         let tree = TreeBuilder::from_paths(&mut direntries.iter().map(|e| e.path()))
             .unwrap()
             .build();
-        tree.for_each(&mut |item| write_tree_item(output, &mut report, item, &settings))?;
+        tree.for_each(&mut |item| write_tree_item(output, &mut report, item, &settings))
+            .map_err(Error::Io)?;
     }
     if settings.report {
-        writeln!(output)?;
-        writeln!(output, "{}", report)?;
+        writeln!(output, "\n{}", report).map_err(Error::Io)?;
     }
     Ok(())
 }
