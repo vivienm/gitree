@@ -65,7 +65,7 @@ fn get_walk(path: &Path, settings: &Settings) -> ignore::Walk {
     walk_builder.build()
 }
 
-fn tree<'a, W: Write>(output: &mut W, paths: Vec<&'a Path>, settings: &Settings) {
+fn tree<'a, W: Write>(output: &mut W, paths: Vec<&'a Path>, settings: &Settings) -> io::Result<()> {
     let mut report = Report::new();
     for root_path in paths {
         let walk = get_walk(root_path, &settings);
@@ -73,14 +73,13 @@ fn tree<'a, W: Write>(output: &mut W, paths: Vec<&'a Path>, settings: &Settings)
         let tree = TreeBuilder::from_paths(&mut direntries.iter().map(|e| e.path()))
             .unwrap()
             .build();
-        tree.for_each(&mut |item| {
-            let _ = write_tree_item(output, &mut report, item, &settings);
-        });
+        tree.for_each(&mut |item| write_tree_item(output, &mut report, item, &settings))?;
     }
     if settings.report {
-        writeln!(output);
-        writeln!(output, "{}", report);
+        writeln!(output)?;
+        writeln!(output, "{}", report)?;
     }
+    Ok(())
 }
 
 fn main() {
@@ -92,5 +91,11 @@ fn main() {
     };
 
     let mut stdout = io::stdout();
-    tree(&mut stdout, root_paths, &settings);
+    match tree(&mut stdout, root_paths, &settings) {
+        Ok(()) => process::exit(0),
+        Err(err) => {
+            eprintln!("{}", err);
+            process::exit(2);
+        }
+    }
 }
