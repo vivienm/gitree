@@ -7,34 +7,29 @@ pub fn build_app() -> App<'static, 'static> {
                 .long("hidden")
                 .short("H")
                 .help("Prints hidden files and directories"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("print_ignored")
                 .long("no-ignore")
                 .short("I")
                 .help("Prints files ignored by Git"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("follow_links")
                 .long("follow")
                 .short("L")
                 .help("Follows symbolic links"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("print_path")
                 .long("full-path")
                 .short("p")
                 .help("Prints the full path prefix for each file"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("max_depth")
                 .long("max-depth")
                 .short("d")
                 .takes_value(true)
                 .value_name("LEVEL")
                 .help("Maximum depth of the directory tree"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("include_patterns")
                 .long("include")
                 .short("P")
@@ -43,8 +38,7 @@ pub fn build_app() -> App<'static, 'static> {
                 .multiple(true)
                 .number_of_values(1)
                 .help("Includes files and directories that match the glob pattern"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("exclude_patterns")
                 .long("exclude")
                 .short("E")
@@ -53,26 +47,22 @@ pub fn build_app() -> App<'static, 'static> {
                 .multiple(true)
                 .number_of_values(1)
                 .help("Excludes files and directories that match the glob pattern"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("ignore_case")
                 .long("ignore-case")
                 .short("i")
                 .help("Uses case-insensitive patterns"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("no_sort_files")
                 .long("no-sort-files")
                 .short("S")
                 .help("Does not sort files"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("no_report")
                 .long("no-report")
                 .short("R")
                 .help("Does not print the file and directory report"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("color")
                 .long("color")
                 .short("c")
@@ -80,8 +70,7 @@ pub fn build_app() -> App<'static, 'static> {
                 .value_name("WHEN")
                 .possible_values(&["never", "auto", "always"])
                 .help("Uses color for output"),
-        )
-        .arg(
+        ).arg(
             Arg::with_name("directory")
                 .value_name("DIRECTORY")
                 .multiple(true)
