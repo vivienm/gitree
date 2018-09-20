@@ -40,6 +40,8 @@ pub fn build_app() -> App<'static, 'static> {
                 .short("P")
                 .takes_value(true)
                 .value_name("PATTERN")
+                .multiple(true)
+                .number_of_values(1)
                 .help("Includes files and directories that match the glob pattern"),
         )
         .arg(
@@ -48,6 +50,8 @@ pub fn build_app() -> App<'static, 'static> {
                 .short("E")
                 .takes_value(true)
                 .value_name("PATTERN")
+                .multiple(true)
+                .number_of_values(1)
                 .help("Excludes files and directories that match the glob pattern"),
         )
         .arg(
