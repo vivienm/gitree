@@ -1,3 +1,6 @@
+// This file incorporates work covered by the following copyright and
+// permission notice:
+//
 // Copyright (c) 2017 fd developers
 // Licensed under the Apache License, Version 2.0
 // <LICENSE-APACHE or http://www.apache.org/licenses/LICENSE-2.0>
@@ -45,9 +48,9 @@ impl Default for LsColors {
     /// Get a default LsColors structure.
     fn default() -> LsColors {
         LsColors {
-            directory: Colour::Blue.bold(),
+            directory: Colour::Green.normal(),
             symlink: Colour::Cyan.normal(),
-            executable: Colour::Red.bold(),
+            executable: Colour::Purple.normal(),
             extensions: HashMap::new(),
             filenames: HashMap::new(),
         }
