@@ -33,6 +33,7 @@ pub struct LsColors {
 
     /// ANSI style for symbolic links.
     pub symlink: Style,
+    pub orphan: Style,
 
     /// ANSI style for executable files.
     pub executable: Style,
@@ -50,6 +51,7 @@ impl Default for LsColors {
         LsColors {
             directory: Colour::Green.normal(),
             symlink: Colour::Cyan.normal(),
+            orphan: Style::default(),
             executable: Colour::Purple.normal(),
             extensions: HashMap::new(),
             filenames: HashMap::new(),
@@ -140,6 +142,7 @@ impl LsColors {
                         match &code[..] {
                             "di" => self.directory = style,
                             "ln" => self.symlink = style,
+                            "or" => self.orphan = style,
                             "ex" => self.executable = style,
                             _ => return,
                         }

@@ -1,3 +1,4 @@
+use std::borrow;
 use std::ffi::OsStr;
 use std::fs;
 use std::io::{self, Write};
@@ -51,7 +52,7 @@ fn test_write_indents() {
 }
 
 enum FileInfo {
-    SymLink { target: PathBuf },
+    SymLink { target: PathBuf, orphan: bool },
     Directory,
     File { executable: bool },
 }
@@ -61,7 +62,8 @@ impl FileInfo {
         let metadata = path.symlink_metadata()?;
         if metadata.file_type().is_symlink() {
             let target = fs::read_link(path)?;
-            Ok(FileInfo::SymLink { target })
+            let orphan = !target.exists();
+            Ok(FileInfo::SymLink { target, orphan })
         } else if metadata.is_dir() {
             Ok(FileInfo::Directory)
         } else {
@@ -74,50 +76,57 @@ impl FileInfo {
 fn get_path_style<'a>(
     path: &Path,
     info: &FileInfo,
-    ls_colors: &'a LsColors,
+    ls_colors: Option<&'a LsColors>,
 ) -> Option<&'a ansi_term::Style> {
-    match info {
-        FileInfo::SymLink { .. } => Some(&ls_colors.symlink),
-        FileInfo::Directory => Some(&ls_colors.directory),
-        FileInfo::File { executable: true } => Some(&ls_colors.executable),
-        FileInfo::File { executable: false } => {
-            if let Some(filename_style) = path
-                .file_name()
-                .and_then(|filename| filename.to_str())
-                .and_then(|filename| ls_colors.filenames.get(filename))
-            {
-                Some(filename_style)
-            } else if let Some(extension_style) = path
-                .extension()
-                .and_then(|extension| extension.to_str())
-                .and_then(|extension| ls_colors.extensions.get(extension))
-            {
-                Some(extension_style)
-            } else {
-                None
+    if let Some(ls_colors) = ls_colors {
+        match info {
+            FileInfo::SymLink { orphan: false, .. } => Some(&ls_colors.symlink),
+            FileInfo::SymLink { orphan: true, .. } => Some(&ls_colors.orphan),
+            FileInfo::Directory => Some(&ls_colors.directory),
+            FileInfo::File { executable: true } => Some(&ls_colors.executable),
+            FileInfo::File { executable: false } => {
+                if let Some(filename_style) = path
+                    .file_name()
+                    .and_then(|filename| filename.to_str())
+                    .and_then(|filename| ls_colors.filenames.get(filename))
+                {
+                    Some(filename_style)
+                } else if let Some(extension_style) = path
+                    .extension()
+                    .and_then(|extension| extension.to_str())
+                    .and_then(|extension| ls_colors.extensions.get(extension))
+                {
+                    Some(extension_style)
+                } else {
+                    None
+                }
             }
         }
+    } else {
+        None
     }
 }
 
-fn write_file_label<'a, W>(
-    output: &mut W,
-    path: &Path,
-    info: &FileInfo,
-    ls_colors: Option<&'a LsColors>,
-    print_path: bool,
-) -> io::Result<()>
-where
-    W: Write,
-{
-    let label = if print_path {
+fn get_path_label(path: &Path, print_path: bool) -> borrow::Cow<str> {
+    if print_path {
         path.to_string_lossy()
     } else {
         path.file_name()
             .unwrap_or_else(|| OsStr::new(".."))
             .to_string_lossy()
-    };
-    let style = ls_colors.and_then(|ls_colors| get_path_style(path, info, ls_colors));
+    }
+}
+
+fn write_path_label<'a, W>(
+    output: &mut W,
+    path: &Path,
+    style: Option<&ansi_term::Style>,
+    print_path: bool,
+) -> io::Result<()>
+where
+    W: Write,
+{
+    let label = get_path_label(path, print_path);
     if let Some(style) = style {
         write!(output, "{}", style.paint(label))?;
     } else {
@@ -137,21 +146,32 @@ where
     W: Write,
 {
     let info = FileInfo::from_path(path)?;
-    write_file_label(output, path, &info, ls_colors, print_path)?;
+    let style = get_path_style(path, &info, ls_colors);
+    write_path_label(output, path, style, print_path)?;
     match info {
         FileInfo::Directory => report.add_dir(),
         FileInfo::File { .. } => report.add_file(),
-        FileInfo::SymLink { target } => {
-            let target_info = FileInfo::from_path(&target)?;
+        FileInfo::SymLink {
+            target: target_path,
+            orphan,
+        } => {
             write!(output, " -> ")?;
-            write_file_label(output, path, &target_info, ls_colors, true)?;
-            match target_info {
-                FileInfo::Directory => report.add_dir(),
-                FileInfo::File { .. } | FileInfo::SymLink { .. } => report.add_file(),
+            if orphan {
+                write_path_label(output, &target_path, style, true)?;
+                report.add_file();
+            } else {
+                let target_info = FileInfo::from_path(&target_path)?;
+                let target_style = get_path_style(&target_path, &target_info, ls_colors);
+                write_path_label(output, &target_path, target_style, true)?;
+                match target_info {
+                    FileInfo::Directory => report.add_dir(),
+                    FileInfo::File { .. } | FileInfo::SymLink { .. } => report.add_file(),
+                }
             }
         }
     };
-    writeln!(output)
+    writeln!(output)?;
+    Ok(())
 }
 
 pub fn write_tree_item<W>(
