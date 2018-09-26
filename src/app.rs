@@ -11,7 +11,7 @@ pub fn build_app() -> App<'static, 'static> {
             Arg::with_name("print_ignored")
                 .long("no-ignore")
                 .short("I")
-                .help("Prints files ignored by Git"),
+                .help("Prints files and directories ignored by Git"),
         ).arg(
             Arg::with_name("follow_links")
                 .long("follow")
@@ -21,7 +21,7 @@ pub fn build_app() -> App<'static, 'static> {
             Arg::with_name("print_path")
                 .long("full-path")
                 .short("p")
-                .help("Prints the full path prefix for each file"),
+                .help("Prints the full path of each file and directory"),
         ).arg(
             Arg::with_name("max_depth")
                 .long("max-depth")
@@ -51,7 +51,7 @@ pub fn build_app() -> App<'static, 'static> {
             Arg::with_name("ignore_case")
                 .long("ignore-case")
                 .short("i")
-                .help("Uses case-insensitive patterns"),
+                .help("Performs case-insensitive pattern matching"),
         ).arg(
             Arg::with_name("no_sort_files")
                 .long("no-sort-files")
@@ -61,7 +61,7 @@ pub fn build_app() -> App<'static, 'static> {
             Arg::with_name("no_report")
                 .long("no-report")
                 .short("R")
-                .help("Does not print the file and directory report"),
+                .help("Does not print the report"),
         ).arg(
             Arg::with_name("color")
                 .long("color")
@@ -74,6 +74,6 @@ pub fn build_app() -> App<'static, 'static> {
             Arg::with_name("directory")
                 .value_name("DIRECTORY")
                 .multiple(true)
-                .help("Directories to process"),
+                .help("Directories to display"),
         )
 }
