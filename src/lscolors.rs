@@ -128,7 +128,7 @@ impl LsColors {
         if let Some(pattern) = parts.next() {
             if let Some(style_code) = parts.next() {
                 // Ensure that the input was split into exactly two parts:
-                if !parts.next().is_none() {
+                if parts.next().is_some() {
                     return;
                 }
 
@@ -137,7 +137,7 @@ impl LsColors {
                     let res = LS_CODES.iter().find(|&&c| c == pattern);
 
                     if let Some(code) = res {
-                        match code.as_ref() {
+                        match &code[..] {
                             "di" => self.directory = style,
                             "ln" => self.symlink = style,
                             "ex" => self.executable = style,
