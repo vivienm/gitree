@@ -22,3 +22,10 @@ test:
     paths:
     - .cargo/
     - target/
+
+deploy:
+  stage: deploy
+  script:
+  - curl -X POST -F token="${DEPLOY_TRIGGER_TOKEN}" -F ref="${CI_COMMIT_REF_NAME}" "${DEPLOY_TRIGGER_URL}"
+  only:
+  - master
