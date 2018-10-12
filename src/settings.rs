@@ -20,8 +20,8 @@ pub struct Settings {
     // Maximum depth of the directory tree.
     pub max_depth: Option<usize>,
 
-    // Include patterns.
-    pub include_patterns: Vec<String>,
+    // Glob patterns.
+    pub patterns: Vec<String>,
     pub ignore_case: bool,
 
     // Sort files.
@@ -42,11 +42,8 @@ impl Settings {
             _ => atty::is(atty::Stream::Stdout),
         };
         let mut patterns = vec![];
-        for pattern in matches.values_of("include_patterns").unwrap_or_default() {
+        for pattern in matches.values_of("patterns").unwrap_or_default() {
             patterns.push(String::from(pattern));
-        }
-        for pattern in matches.values_of("exclude_patterns").unwrap_or_default() {
-            patterns.push(String::from("!") + pattern);
         }
         Settings {
             print_hidden: !matches.is_present("print_hidden"),
@@ -56,7 +53,7 @@ impl Settings {
             max_depth: matches
                 .value_of("max_depth")
                 .and_then(|val| usize::from_str_radix(val, 10).ok()),
-            include_patterns: patterns,
+            patterns,
             ignore_case: matches.is_present("ignore_case"),
             sort_files: !matches.is_present("no_sort_files"),
             report: !matches.is_present("no_report"),

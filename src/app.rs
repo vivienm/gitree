@@ -30,23 +30,14 @@ pub fn build_app() -> App<'static, 'static> {
                 .value_name("LEVEL")
                 .help("Maximum depth of the directory tree"),
         ).arg(
-            Arg::with_name("include_patterns")
-                .long("include")
-                .short("P")
+            Arg::with_name("patterns")
+                .long("glob")
+                .short("g")
                 .takes_value(true)
                 .value_name("PATTERN")
                 .multiple(true)
                 .number_of_values(1)
-                .help("Includes files and directories that match the glob pattern"),
-        ).arg(
-            Arg::with_name("exclude_patterns")
-                .long("exclude")
-                .short("E")
-                .takes_value(true)
-                .value_name("PATTERN")
-                .multiple(true)
-                .number_of_values(1)
-                .help("Excludes files and directories that match the glob pattern"),
+                .help("Includes or excludes files and directories that match the glob pattern"),
         ).arg(
             Arg::with_name("ignore_case")
                 .long("ignore-case")

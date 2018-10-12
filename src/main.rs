@@ -56,10 +56,10 @@ fn get_walk(path: &Path, settings: &Settings) -> Result<ignore::Walk, ignore::Er
         .follow_links(settings.follow_links)
         .max_depth(settings.max_depth);
 
-    if !settings.include_patterns.is_empty() {
+    if !settings.patterns.is_empty() {
         let mut override_builder = OverrideBuilder::new(path);
         override_builder.case_insensitive(settings.ignore_case)?;
-        for pattern in &settings.include_patterns {
+        for pattern in &settings.patterns {
             override_builder.add(pattern)?;
         }
         let overrides = override_builder.build()?;
