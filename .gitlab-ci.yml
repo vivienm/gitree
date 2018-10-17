@@ -1,22 +1,12 @@
-image: registry.gitlab.com/vmaison/docker-ci-rust:latest
-
-stages:
-- lint
-- test
-- deploy
-
 variables:
   CARGO_HOME: "${CI_PROJECT_DIR}/.cargo"
 
-lint:
-  stage: lint
+test:
+  stage: test
+  image: registry.gitlab.com/vmaison/docker-ci-rust:latest
   script:
   - cargo fmt -- --check
   - cargo clippy
-
-test:
-  stage: test
-  script:
   - cargo check --verbose
   - cargo test --verbose
   cache:
