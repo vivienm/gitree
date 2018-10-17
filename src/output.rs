@@ -52,9 +52,15 @@ fn test_write_indents() {
 }
 
 enum FileInfo {
-    SymLink { target: PathBuf, orphan: bool },
+    SymLink {
+        target: PathBuf,
+        resolved: PathBuf,
+        orphan: bool,
+    },
     Directory,
-    File { executable: bool },
+    File {
+        executable: bool,
+    },
 }
 
 impl FileInfo {
@@ -62,8 +68,13 @@ impl FileInfo {
         let metadata = path.symlink_metadata()?;
         if metadata.file_type().is_symlink() {
             let target = fs::read_link(path)?;
-            let orphan = !target.exists();
-            Ok(FileInfo::SymLink { target, orphan })
+            let resolved = fs::canonicalize(path)?;
+            let orphan = !resolved.exists();
+            Ok(FileInfo::SymLink {
+                target,
+                resolved,
+                orphan,
+            })
         } else if metadata.is_dir() {
             Ok(FileInfo::Directory)
         } else {
@@ -153,6 +164,7 @@ where
         FileInfo::File { .. } => report.add_file(),
         FileInfo::SymLink {
             target: target_path,
+            resolved: resolved_path,
             orphan,
         } => {
             write!(output, " -> ")?;
@@ -160,10 +172,10 @@ where
                 write_path_label(output, &target_path, style, true)?;
                 report.add_file();
             } else {
-                let target_info = FileInfo::from_path(&target_path)?;
-                let target_style = get_path_style(&target_path, &target_info, ls_colors);
-                write_path_label(output, &target_path, target_style, true)?;
-                match target_info {
+                let resolved_info = FileInfo::from_path(&resolved_path)?;
+                let resolved_style = get_path_style(&resolved_path, &resolved_info, ls_colors);
+                write_path_label(output, &target_path, resolved_style, true)?;
+                match resolved_info {
                     FileInfo::Directory => report.add_dir(),
                     FileInfo::File { .. } | FileInfo::SymLink { .. } => report.add_file(),
                 }
