@@ -27,6 +27,6 @@ test:
 deploy:
   stage: deploy
   script:
-  - curl -X POST -F token="${DEPLOY_TRIGGER_TOKEN}" -F ref=master "${DEPLOY_TRIGGER_URL}"
+  - curl -X POST -F "token=${TRIGGER_TOKEN}" -F "ref=${TRIGGER_REF_NAME}" "${TRIGGER_URL}"
   only:
   - master
