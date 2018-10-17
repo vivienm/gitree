@@ -128,7 +128,7 @@ fn get_path_label(path: &Path, print_path: bool) -> borrow::Cow<str> {
     }
 }
 
-fn write_path_label<'a, W>(
+fn write_path_label<W>(
     output: &mut W,
     path: &Path,
     style: Option<&ansi_term::Style>,
