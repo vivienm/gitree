@@ -148,7 +148,7 @@ where
 
 fn write_file_line<'a, W>(
     output: &mut W,
-    report: &mut Report,
+    report: Option<&mut Report>,
     path: &Path,
     ls_colors: Option<&'a LsColors>,
     print_path: bool,
@@ -160,8 +160,8 @@ where
     let style = get_path_style(path, &info, ls_colors);
     write_path_label(output, path, style, print_path)?;
     match info {
-        FileInfo::Directory => report.add_dir(),
-        FileInfo::File { .. } => report.add_file(),
+        FileInfo::Directory => report.map(Report::add_dir),
+        FileInfo::File { .. } => report.map(Report::add_file),
         FileInfo::SymLink {
             target: target_path,
             resolved: resolved_path,
@@ -170,14 +170,16 @@ where
             write!(output, " -> ")?;
             if orphan {
                 write_path_label(output, &target_path, style, true)?;
-                report.add_file();
+                report.map(Report::add_file)
             } else {
                 let resolved_info = FileInfo::from_path(&resolved_path)?;
                 let resolved_style = get_path_style(&resolved_path, &resolved_info, ls_colors);
                 write_path_label(output, &target_path, resolved_style, true)?;
                 match resolved_info {
-                    FileInfo::Directory => report.add_dir(),
-                    FileInfo::File { .. } | FileInfo::SymLink { .. } => report.add_file(),
+                    FileInfo::Directory => report.map(Report::add_dir),
+                    FileInfo::File { .. } | FileInfo::SymLink { .. } => {
+                        report.map(Report::add_file)
+                    }
                 }
             }
         }
@@ -198,9 +200,15 @@ where
     let ls_colors = settings.ls_colors.as_ref();
     if let Some((parent_indent, ancestor_indents)) = item.indents.split_last() {
         write_indents(output, ancestor_indents, *parent_indent)?;
-        write_file_line(output, report, item.path, ls_colors, settings.print_path)?;
+        write_file_line(
+            output,
+            Some(report),
+            item.path,
+            ls_colors,
+            settings.print_path,
+        )?;
     } else {
-        write_file_line(output, report, item.path, ls_colors, true)?;
+        write_file_line(output, None, item.path, ls_colors, true)?;
     }
     Ok(())
 }
