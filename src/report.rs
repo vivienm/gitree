@@ -24,6 +24,17 @@ impl Report {
 
 impl fmt::Display for Report {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{} directories, {} files", self.num_dirs, self.num_files,)
+        write!(
+            f,
+            "{} {}, {} {}",
+            self.num_dirs,
+            if self.num_dirs == 1 {
+                "directory"
+            } else {
+                "directories"
+            },
+            self.num_files,
+            if self.num_files == 1 { "file" } else { "files" }
+        )
     }
 }
