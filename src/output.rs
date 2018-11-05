@@ -54,8 +54,7 @@ fn test_write_indents() {
 enum FileInfo {
     SymLink {
         target: PathBuf,
-        resolved: PathBuf,
-        orphan: bool,
+        resolved: Option<PathBuf>,
     },
     Directory,
     File {
@@ -66,21 +65,21 @@ enum FileInfo {
 impl FileInfo {
     fn from_path(path: &Path) -> io::Result<Self> {
         let metadata = path.symlink_metadata()?;
-        if metadata.file_type().is_symlink() {
+        let file_info = if metadata.file_type().is_symlink() {
             let target = fs::read_link(path)?;
-            let resolved = fs::canonicalize(path)?;
-            let orphan = !resolved.exists();
-            Ok(FileInfo::SymLink {
-                target,
-                resolved,
-                orphan,
-            })
+            let resolved = match fs::canonicalize(path) {
+                Ok(resolved) => Some(resolved),
+                Err(ref err) if err.kind() == io::ErrorKind::NotFound => None,
+                Err(err) => return Err(err),
+            };
+            FileInfo::SymLink { target, resolved }
         } else if metadata.is_dir() {
-            Ok(FileInfo::Directory)
+            FileInfo::Directory
         } else {
             let executable = metadata.permissions().mode() & 0o111 != 0;
-            Ok(FileInfo::File { executable })
-        }
+            FileInfo::File { executable }
+        };
+        Ok(file_info)
     }
 }
 
@@ -91,8 +90,10 @@ fn get_path_style<'a>(
 ) -> Option<&'a ansi_term::Style> {
     if let Some(ls_colors) = ls_colors {
         match info {
-            FileInfo::SymLink { orphan: false, .. } => Some(&ls_colors.symlink),
-            FileInfo::SymLink { orphan: true, .. } => Some(&ls_colors.orphan),
+            FileInfo::SymLink {
+                resolved: Some(..), ..
+            } => Some(&ls_colors.symlink),
+            FileInfo::SymLink { resolved: None, .. } => Some(&ls_colors.orphan),
             FileInfo::Directory => Some(&ls_colors.directory),
             FileInfo::File { executable: true } => Some(&ls_colors.executable),
             FileInfo::File { executable: false } => {
@@ -165,20 +166,22 @@ where
         FileInfo::SymLink {
             target: target_path,
             resolved: resolved_path,
-            orphan,
         } => {
             write!(output, " -> ")?;
-            if orphan {
-                write_path_label(output, &target_path, style, true)?;
-                report.map(Report::add_file)
-            } else {
-                let resolved_info = FileInfo::from_path(&resolved_path)?;
-                let resolved_style = get_path_style(&resolved_path, &resolved_info, ls_colors);
-                write_path_label(output, &target_path, resolved_style, true)?;
-                match resolved_info {
-                    FileInfo::Directory => report.map(Report::add_dir),
-                    FileInfo::File { .. } | FileInfo::SymLink { .. } => {
-                        report.map(Report::add_file)
+            match resolved_path {
+                None => {
+                    write_path_label(output, &target_path, style, true)?;
+                    report.map(Report::add_file)
+                }
+                Some(resolved_path) => {
+                    let resolved_info = FileInfo::from_path(&resolved_path)?;
+                    let resolved_style = get_path_style(&resolved_path, &resolved_info, ls_colors);
+                    write_path_label(output, &target_path, resolved_style, true)?;
+                    match resolved_info {
+                        FileInfo::Directory => report.map(Report::add_dir),
+                        FileInfo::File { .. } | FileInfo::SymLink { .. } => {
+                            report.map(Report::add_file)
+                        }
                     }
                 }
             }
