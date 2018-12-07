@@ -2,6 +2,7 @@
 name = "gitree"
 version = "0.1.0"
 authors = ["Vivien Maisonneuve <v.maisonneuve@gmail.com>"]
+edition = "2018"
 description = "Print a directory tree while respecting gitignore rules."
 license = "MIT"
 homepage = "https://gitlab.com/vmaison/gitree"

@@ -1,8 +1,8 @@
 use atty;
 use clap;
 
-use lscolors::LsColors;
-use utils::get_ls_colors;
+use crate::lscolors::LsColors;
+use crate::utils::get_ls_colors;
 
 pub struct Settings {
     // Print hidden files and directories.

@@ -1,10 +1,7 @@
-#[macro_use]
-extern crate clap;
-
 use std::env;
 use std::fs;
 
-use clap::Shell;
+use clap::{crate_name, Shell};
 
 #[allow(dead_code)]
 #[path = "src/app.rs"]

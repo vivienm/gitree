@@ -1,11 +1,3 @@
-extern crate ansi_term;
-extern crate atty;
-#[macro_use]
-extern crate clap;
-#[macro_use]
-extern crate derive_more;
-extern crate ignore;
-
 mod app;
 mod lscolors;
 mod output;
@@ -19,15 +11,16 @@ use std::io::{self, Write};
 use std::path::Path;
 use std::process;
 
+use derive_more::{Display, From};
 use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
 
-use app::build_app;
-use output::write_tree_item;
-use pathtree::TreeBuilder;
-use report::Report;
-use settings::Settings;
-use utils::compare_file_names;
+use crate::app::build_app;
+use crate::output::write_tree_item;
+use crate::pathtree::TreeBuilder;
+use crate::report::Report;
+use crate::settings::Settings;
+use crate::utils::compare_file_names;
 
 #[derive(Debug, Display, From)]
 enum Error {

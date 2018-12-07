@@ -7,10 +7,10 @@ use std::path::{Path, PathBuf};
 
 use ansi_term;
 
-use lscolors::LsColors;
-use pathtree::TreeItem;
-use report::Report;
-use settings::Settings;
+use crate::lscolors::LsColors;
+use crate::pathtree::TreeItem;
+use crate::report::Report;
+use crate::settings::Settings;
 
 const INDENT_EMPTY: &str = "    ";
 const INDENT_BAR: &str = "│   ";
