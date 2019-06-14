@@ -1,4 +1,5 @@
 use std::fmt;
+use std::fs::FileType;
 
 pub struct Report {
     num_dirs: usize,
@@ -13,12 +14,14 @@ impl Report {
         }
     }
 
-    pub fn add_dir(&mut self) {
-        self.num_dirs += 1;
-    }
-
-    pub fn add_file(&mut self) {
-        self.num_files += 1;
+    pub fn add(&mut self, toplevel: bool, file_type: &FileType) {
+        if !toplevel {
+            if file_type.is_dir() {
+                self.num_dirs += 1;
+            } else {
+                self.num_files += 1;
+            }
+        }
     }
 }
 

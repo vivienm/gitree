@@ -79,8 +79,9 @@ where
 }
 
 fn write_file_line<'a, W>(
+    toplevel: bool,
     output: &mut W,
-    report: Option<&mut Report>,
+    report: &mut Report,
     path: &Path,
     ls_colors: &'a LsColors,
     print_path: bool,
@@ -104,22 +105,16 @@ where
                     .style_for_path_with_metadata(path, Some(&metadata))
                     .map(Style::to_ansi_term_style);
                 write_path_label(output, path, target_style.as_ref(), print_path)?;
-                report.map(if target_metadata.is_dir() {
-                    Report::add_dir
-                } else {
-                    Report::add_file
-                });
+                report.add(toplevel, &target_metadata.file_type());
             }
             Err(ref err) if err.kind() == io::ErrorKind::NotFound => {
                 write_path_label(output, path, style.as_ref(), print_path)?;
-                report.map(Report::add_file);
+                report.add(toplevel, &file_type);
             }
             Err(err) => return Err(err),
         };
-    } else if file_type.is_dir() {
-        report.map(Report::add_dir);
     } else {
-        report.map(Report::add_file);
+        report.add(toplevel, &file_type);
     }
     writeln!(output)?;
     Ok(())
@@ -134,17 +129,21 @@ pub fn write_tree_item<W>(
 where
     W: Write,
 {
-    if let Some((parent_indent, ancestor_indents)) = item.indents.split_last() {
-        write_indents(output, ancestor_indents, *parent_indent)?;
-        write_file_line(
-            output,
-            Some(report),
-            item.path,
-            &settings.ls_colors,
-            settings.print_path,
-        )?;
-    } else {
-        write_file_line(output, None, item.path, &settings.ls_colors, true)?;
-    }
+    let toplevel = {
+        if let Some((parent_indent, ancestor_indents)) = item.indents.split_last() {
+            write_indents(output, ancestor_indents, *parent_indent)?;
+            false
+        } else {
+            true
+        }
+    };
+    write_file_line(
+        toplevel,
+        output,
+        report,
+        item.path,
+        &settings.ls_colors,
+        toplevel || settings.print_path,
+    )?;
     Ok(())
 }
