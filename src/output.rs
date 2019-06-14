@@ -2,12 +2,11 @@ use std::borrow;
 use std::ffi::OsStr;
 use std::fs;
 use std::io::{self, Write};
-use std::os::unix::fs::PermissionsExt;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use ansi_term;
+use lscolors::{LsColors, Style};
 
-use crate::lscolors::LsColors;
 use crate::pathtree::TreeItem;
 use crate::report::Report;
 use crate::settings::Settings;
@@ -51,74 +50,6 @@ fn test_write_indents() {
     assert_eq!(write_string(&[true, false], true), "    │   └── ");
 }
 
-enum FileInfo {
-    SymLink {
-        target: PathBuf,
-        resolved: Option<PathBuf>,
-    },
-    Directory,
-    File {
-        executable: bool,
-    },
-}
-
-impl FileInfo {
-    fn from_path(path: &Path) -> io::Result<Self> {
-        let metadata = path.symlink_metadata()?;
-        let file_info = if metadata.file_type().is_symlink() {
-            let target = fs::read_link(path)?;
-            let resolved = match fs::canonicalize(path) {
-                Ok(resolved) => Some(resolved),
-                Err(ref err) if err.kind() == io::ErrorKind::NotFound => None,
-                Err(err) => return Err(err),
-            };
-            FileInfo::SymLink { target, resolved }
-        } else if metadata.is_dir() {
-            FileInfo::Directory
-        } else {
-            let executable = metadata.permissions().mode() & 0o111 != 0;
-            FileInfo::File { executable }
-        };
-        Ok(file_info)
-    }
-}
-
-fn get_path_style<'a>(
-    path: &Path,
-    info: &FileInfo,
-    ls_colors: Option<&'a LsColors>,
-) -> Option<&'a ansi_term::Style> {
-    if let Some(ls_colors) = ls_colors {
-        match info {
-            FileInfo::SymLink {
-                resolved: Some(..), ..
-            } => Some(&ls_colors.symlink),
-            FileInfo::SymLink { resolved: None, .. } => Some(&ls_colors.orphan),
-            FileInfo::Directory => Some(&ls_colors.directory),
-            FileInfo::File { executable: true } => Some(&ls_colors.executable),
-            FileInfo::File { executable: false } => {
-                if let Some(filename_style) = path
-                    .file_name()
-                    .and_then(|filename| filename.to_str())
-                    .and_then(|filename| ls_colors.filenames.get(filename))
-                {
-                    Some(filename_style)
-                } else if let Some(extension_style) = path
-                    .extension()
-                    .and_then(|extension| extension.to_str())
-                    .and_then(|extension| ls_colors.extensions.get(extension))
-                {
-                    Some(extension_style)
-                } else {
-                    None
-                }
-            }
-        }
-    } else {
-        None
-    }
-}
-
 fn get_path_label(path: &Path, print_path: bool) -> borrow::Cow<str> {
     if print_path {
         path.to_string_lossy()
@@ -151,42 +82,45 @@ fn write_file_line<'a, W>(
     output: &mut W,
     report: Option<&mut Report>,
     path: &Path,
-    ls_colors: Option<&'a LsColors>,
+    ls_colors: &'a LsColors,
     print_path: bool,
 ) -> io::Result<()>
 where
     W: Write,
 {
-    let info = FileInfo::from_path(path)?;
-    let style = get_path_style(path, &info, ls_colors);
-    write_path_label(output, path, style, print_path)?;
-    match info {
-        FileInfo::Directory => report.map(Report::add_dir),
-        FileInfo::File { .. } => report.map(Report::add_file),
-        FileInfo::SymLink {
-            target: target_path,
-            resolved: resolved_path,
-        } => {
-            write!(output, " -> ")?;
-            match resolved_path {
-                None => {
-                    write_path_label(output, &target_path, style, true)?;
-                    report.map(Report::add_file)
-                }
-                Some(resolved_path) => {
-                    let resolved_info = FileInfo::from_path(&resolved_path)?;
-                    let resolved_style = get_path_style(&resolved_path, &resolved_info, ls_colors);
-                    write_path_label(output, &target_path, resolved_style, true)?;
-                    match resolved_info {
-                        FileInfo::Directory => report.map(Report::add_dir),
-                        FileInfo::File { .. } | FileInfo::SymLink { .. } => {
-                            report.map(Report::add_file)
-                        }
-                    }
-                }
+    let metadata = path.symlink_metadata()?;
+    let style = ls_colors
+        .style_for_path_with_metadata(path, Some(&metadata))
+        .map(Style::to_ansi_term_style);
+    write_path_label(output, path, style.as_ref(), print_path)?;
+    let file_type = metadata.file_type();
+    if file_type.is_symlink() {
+        write!(output, " -> ")?;
+        let relative_target = fs::read_link(path)?;
+        match fs::canonicalize(relative_target) {
+            Ok(absolute_target) => {
+                let target_metadata = absolute_target.symlink_metadata()?;
+                let target_style = ls_colors
+                    .style_for_path_with_metadata(path, Some(&metadata))
+                    .map(Style::to_ansi_term_style);
+                write_path_label(output, path, target_style.as_ref(), print_path)?;
+                report.map(if target_metadata.is_dir() {
+                    Report::add_dir
+                } else {
+                    Report::add_file
+                });
             }
-        }
-    };
+            Err(ref err) if err.kind() == io::ErrorKind::NotFound => {
+                write_path_label(output, path, style.as_ref(), print_path)?;
+                report.map(Report::add_file);
+            }
+            Err(err) => return Err(err),
+        };
+    } else if file_type.is_dir() {
+        report.map(Report::add_dir);
+    } else {
+        report.map(Report::add_file);
+    }
     writeln!(output)?;
     Ok(())
 }
@@ -200,18 +134,17 @@ pub fn write_tree_item<W>(
 where
     W: Write,
 {
-    let ls_colors = settings.ls_colors.as_ref();
     if let Some((parent_indent, ancestor_indents)) = item.indents.split_last() {
         write_indents(output, ancestor_indents, *parent_indent)?;
         write_file_line(
             output,
             Some(report),
             item.path,
-            ls_colors,
+            &settings.ls_colors,
             settings.print_path,
         )?;
     } else {
-        write_file_line(output, None, item.path, ls_colors, true)?;
+        write_file_line(output, None, item.path, &settings.ls_colors, true)?;
     }
     Ok(())
 }

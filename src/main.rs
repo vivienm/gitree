@@ -1,5 +1,4 @@
 mod app;
-mod lscolors;
 mod output;
 mod pathtree;
 mod report;

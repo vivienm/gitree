@@ -1,7 +1,7 @@
 use atty;
 use clap;
+use lscolors::LsColors;
 
-use crate::lscolors::LsColors;
 use crate::utils::get_ls_colors;
 
 pub struct Settings {
@@ -31,7 +31,7 @@ pub struct Settings {
     pub report: bool,
 
     // Color codes.
-    pub ls_colors: Option<LsColors>,
+    pub ls_colors: LsColors,
 }
 
 impl Settings {
@@ -59,9 +59,9 @@ impl Settings {
             report: !matches.is_present("no_report"),
             ls_colors: {
                 if colored_output {
-                    Some(get_ls_colors())
+                    get_ls_colors()
                 } else {
-                    None
+                    LsColors::empty()
                 }
             },
         }

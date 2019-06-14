@@ -3,7 +3,7 @@ use std::env;
 use std::ffi::OsStr;
 use std::os::unix::ffi::OsStrExt;
 
-use crate::lscolors::LsColors;
+use lscolors::LsColors;
 
 pub fn get_ls_colors() -> LsColors {
     env::var("GITREE_COLORS")

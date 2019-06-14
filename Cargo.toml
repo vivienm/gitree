@@ -16,6 +16,7 @@ atty = "0.2.11"
 clap = "2.33.0"
 derive_more = "0.15.0"
 ignore = "0.4.7"
+lscolors = "0.5.0"
 
 [build-dependencies]
 clap = "2.33.0"
