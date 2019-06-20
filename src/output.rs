@@ -105,16 +105,16 @@ where
                     .style_for_path_with_metadata(path, Some(&metadata))
                     .map(Style::to_ansi_term_style);
                 write_path_label(output, path, target_style.as_ref(), print_path)?;
-                report.add(toplevel, &target_metadata.file_type());
+                report.add(toplevel, target_metadata.file_type());
             }
             Err(ref err) if err.kind() == io::ErrorKind::NotFound => {
                 write_path_label(output, path, style.as_ref(), print_path)?;
-                report.add(toplevel, &file_type);
+                report.add(toplevel, file_type);
             }
             Err(err) => return Err(err),
         };
     } else {
-        report.add(toplevel, &file_type);
+        report.add(toplevel, file_type);
     }
     writeln!(output)?;
     Ok(())

@@ -14,7 +14,7 @@ impl Report {
         }
     }
 
-    pub fn add(&mut self, toplevel: bool, file_type: &FileType) {
+    pub fn add(&mut self, toplevel: bool, file_type: FileType) {
         if !toplevel {
             if file_type.is_dir() {
                 self.num_dirs += 1;
