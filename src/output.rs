@@ -98,17 +98,22 @@ where
     if file_type.is_symlink() {
         write!(output, " -> ")?;
         let relative_target = fs::read_link(path)?;
-        match fs::canonicalize(relative_target) {
+        match fs::canonicalize(&relative_target) {
             Ok(absolute_target) => {
                 let target_metadata = absolute_target.symlink_metadata()?;
                 let target_style = ls_colors
-                    .style_for_path_with_metadata(path, Some(&metadata))
+                    .style_for_path_with_metadata(path, Some(&target_metadata))
                     .map(Style::to_ansi_term_style);
-                write_path_label(output, path, target_style.as_ref(), print_path)?;
+                write_path_label(
+                    output,
+                    relative_target.as_path(),
+                    target_style.as_ref(),
+                    true,
+                )?;
                 report.add(toplevel, target_metadata.file_type());
             }
             Err(ref err) if err.kind() == io::ErrorKind::NotFound => {
-                write_path_label(output, path, style.as_ref(), print_path)?;
+                write_path_label(output, relative_target.as_path(), style.as_ref(), true)?;
                 report.add(toplevel, file_type);
             }
             Err(err) => return Err(err),
