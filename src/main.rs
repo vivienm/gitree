@@ -29,7 +29,10 @@ enum Error {
 
 impl error::Error for Error {}
 
-fn get_walk(path: &Path, settings: &Settings) -> Result<ignore::Walk, ignore::Error> {
+fn get_walk_builder(
+    path: &Path,
+    settings: &Settings,
+) -> Result<ignore::WalkBuilder, ignore::Error> {
     let mut walk_builder = WalkBuilder::new(path);
     walk_builder
         .hidden(settings.print_hidden)
@@ -54,10 +57,14 @@ fn get_walk(path: &Path, settings: &Settings) -> Result<ignore::Walk, ignore::Er
         walk_builder.sort_by_file_name(&compare_file_names);
     }
 
-    Ok(walk_builder.build())
+    Ok(walk_builder)
 }
 
-fn tree<'a, W>(output: &mut W, paths: Vec<&'a Path>, settings: &Settings) -> Result<(), Error>
+fn get_walk(path: &Path, settings: &Settings) -> Result<ignore::Walk, ignore::Error> {
+    Ok(get_walk_builder(path, settings)?.build())
+}
+
+fn write_tree<'a, W>(output: &mut W, paths: Vec<&'a Path>, settings: &Settings) -> Result<(), Error>
 where
     W: Write,
 {
@@ -85,7 +92,7 @@ fn main() {
     };
 
     let mut stdout = io::stdout();
-    match tree(&mut stdout, root_paths, &settings) {
+    match write_tree(&mut stdout, root_paths, &settings) {
         Ok(()) => process::exit(0),
         Err(err) => {
             eprintln!("{}", err);

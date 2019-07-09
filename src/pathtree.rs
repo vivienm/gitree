@@ -1,23 +1,25 @@
 use std::path::Path;
 
-struct TreeNode<'a> {
+pub type TreeIndex = usize;
+
+pub struct TreeNode<'a> {
     path: &'a Path,
-    children: Vec<usize>,
+    children: Vec<TreeIndex>,
 }
 
 impl<'a> TreeNode<'a> {
-    fn new(path: &'a Path, children: Vec<usize>) -> Self {
+    fn new(path: &'a Path, children: Vec<TreeIndex>) -> Self {
         TreeNode { path, children }
     }
+}
+
+pub struct Tree<'a> {
+    nodes: Vec<TreeNode<'a>>,
 }
 
 pub struct TreeItem<'a> {
     pub indents: &'a mut Vec<bool>,
     pub path: &'a Path,
-}
-
-pub struct Tree<'a> {
-    nodes: Vec<TreeNode<'a>>,
 }
 
 impl<'a> Tree<'a> {
@@ -65,7 +67,7 @@ impl<'a> Tree<'a> {
 pub struct TreeBuilder<'a> {
     nodes: Vec<TreeNode<'a>>,
     root_depth: usize,
-    indices: Vec<usize>,
+    indices: Vec<TreeIndex>,
 }
 
 impl<'a> TreeBuilder<'a> {
