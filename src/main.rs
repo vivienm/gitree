@@ -43,6 +43,13 @@ fn get_walk_builder(
         .follow_links(settings.follow_links)
         .max_depth(settings.max_depth);
 
+    for path in &settings.ignored_paths {
+        walk_builder.add_ignore(path);
+    }
+    for name in &settings.ignored_names {
+        walk_builder.add_custom_ignore_filename(name);
+    }
+
     if !settings.patterns.is_empty() {
         let mut override_builder = OverrideBuilder::new(path);
         override_builder.case_insensitive(settings.ignore_case)?;

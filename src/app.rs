@@ -18,6 +18,24 @@ pub fn build_app() -> App<'static, 'static> {
                 .help("Prints files and directories ignored by Git"),
         )
         .arg(
+            Arg::with_name("ignore_paths")
+                .long("ignore-path")
+                .takes_value(true)
+                .value_name("PATH")
+                .multiple(true)
+                .number_of_values(1)
+                .help("Adds a custom ignore filepath in gitignore format"),
+        )
+        .arg(
+            Arg::with_name("ignore_names")
+                .long("ignore-name")
+                .takes_value(true)
+                .value_name("NAME")
+                .multiple(true)
+                .number_of_values(1)
+                .help("Adds a custom ignore filename in gitignore format"),
+        )
+        .arg(
             Arg::with_name("follow_links")
                 .long("follow")
                 .short("L")

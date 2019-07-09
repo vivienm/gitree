@@ -1,3 +1,6 @@
+use std::ffi::OsString;
+use std::path::PathBuf;
+
 use atty;
 use clap;
 use lscolors::LsColors;
@@ -10,6 +13,10 @@ pub struct Settings {
 
     // Print files ignored by Git.
     pub print_ignored: bool,
+
+    // Custom ignore files.
+    pub ignored_paths: Vec<PathBuf>,
+    pub ignored_names: Vec<OsString>,
 
     // Follow symbolic links.
     pub follow_links: bool,
@@ -48,6 +55,16 @@ impl Settings {
         Settings {
             print_hidden: !matches.is_present("print_hidden"),
             print_ignored: !matches.is_present("print_ignored"),
+            ignored_paths: matches
+                .values_of("ignore_paths")
+                .unwrap_or_default()
+                .map(PathBuf::from)
+                .collect(),
+            ignored_names: matches
+                .values_of("ignore_names")
+                .unwrap_or_default()
+                .map(OsString::from)
+                .collect(),
             follow_links: matches.is_present("follow_links"),
             print_path: matches.is_present("print_path"),
             max_depth: matches
