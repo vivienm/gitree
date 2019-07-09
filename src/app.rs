@@ -1,4 +1,7 @@
-use clap::{app_from_crate, crate_authors, crate_description, crate_name, crate_version, App, Arg};
+use clap::{
+    app_from_crate, crate_authors, crate_description, crate_name, crate_version, App, AppSettings,
+    Arg,
+};
 
 pub fn build_app() -> App<'static, 'static> {
     app_from_crate!()
@@ -77,4 +80,5 @@ pub fn build_app() -> App<'static, 'static> {
                 .multiple(true)
                 .help("Directories to display"),
         )
+        .setting(AppSettings::ColoredHelp)
 }
