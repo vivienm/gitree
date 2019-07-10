@@ -27,6 +27,9 @@ pub struct Settings {
     // Maximum depth of the directory tree.
     pub max_depth: Option<usize>,
 
+    // Stay on the same filesystem.
+    pub same_file_system: bool,
+
     // Glob patterns.
     pub patterns: Vec<String>,
     pub ignore_case: bool,
@@ -70,6 +73,7 @@ impl Settings {
             max_depth: matches
                 .value_of("max_depth")
                 .and_then(|val| usize::from_str_radix(val, 10).ok()),
+            same_file_system: matches.is_present("same_file_system"),
             patterns,
             ignore_case: matches.is_present("ignore_case"),
             sort_files: !matches.is_present("no_sort_files"),

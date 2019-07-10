@@ -41,7 +41,8 @@ fn get_walk_builder(
         .git_global(settings.print_ignored)
         .git_exclude(settings.print_ignored)
         .follow_links(settings.follow_links)
-        .max_depth(settings.max_depth);
+        .max_depth(settings.max_depth)
+        .same_file_system(settings.same_file_system);
 
     for path in &settings.ignored_paths {
         walk_builder.add_ignore(path);

@@ -93,6 +93,12 @@ pub fn build_app() -> App<'static, 'static> {
                 .help("Uses color for output"),
         )
         .arg(
+            Arg::with_name("same_file_system")
+                .long("one-file-system")
+                .short("x")
+                .help("Stays on the current filesystem only")
+        )
+        .arg(
             Arg::with_name("directory")
                 .value_name("DIRECTORY")
                 .multiple(true)
