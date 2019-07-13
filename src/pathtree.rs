@@ -1,5 +1,7 @@
 use std::path::Path;
 
+use crate::indent::IndentationLevel;
+
 pub type TreeIndex = usize;
 
 pub struct TreeNode<'a> {
@@ -17,50 +19,41 @@ pub struct Tree<'a> {
     nodes: Vec<TreeNode<'a>>,
 }
 
-pub struct TreeItem<'a> {
-    pub indents: &'a mut Vec<bool>,
-    pub path: &'a Path,
-}
-
 impl<'a> Tree<'a> {
-    fn _for_each<E, F>(
-        &self,
-        func: &mut F,
-        node: &TreeNode,
-        item: &mut TreeItem<'a>,
-    ) -> Result<(), E>
+    const ROOT: TreeIndex = 0;
+
+    #[inline]
+    pub fn get_node(&self, index: TreeIndex) -> &TreeNode<'a> {
+        &self.nodes[index]
+    }
+
+    fn _for_each<E, F, L>(&self, func: &mut F, level: &mut L, node: &TreeNode) -> Result<(), E>
     where
-        F: FnMut(&TreeItem) -> Result<(), E>,
+        F: FnMut(&L, &Path) -> Result<(), E>,
+        L: IndentationLevel,
     {
-        func(item)?;
+        func(level, node.path)?;
         if let Some((last_index, first_indices)) = node.children.split_last() {
-            item.indents.push(false);
+            level.indent();
             for child_index in first_indices {
-                let child_node = &self.nodes[*child_index];
-                item.path = child_node.path;
-                self._for_each(func, child_node, item)?;
+                let child_node = &self.get_node(*child_index);
+                self._for_each(func, level, child_node)?;
             }
-            *item.indents.last_mut().unwrap() = true;
-            let child_node = &self.nodes[*last_index];
-            item.path = child_node.path;
-            self._for_each(func, child_node, item)?;
-            item.indents.pop();
+            level.set_last();
+            let child_node = &self.get_node(*last_index);
+            self._for_each(func, level, child_node)?;
+            level.dedent();
         }
         Ok(())
     }
 
-    pub fn for_each<E, F>(&self, func: &mut F) -> Result<(), E>
+    pub fn for_each<E, F, L>(&self, level: &mut L, func: &mut F) -> Result<(), E>
     where
-        F: FnMut(&TreeItem) -> Result<(), E>,
+        F: FnMut(&L, &Path) -> Result<(), E>,
+        L: IndentationLevel,
     {
-        let root_node = &self.nodes[0];
-        let mut indents = Vec::with_capacity(16);
-        let mut item = TreeItem {
-            indents: &mut indents,
-            path: &root_node.path,
-        };
-        self._for_each(func, &root_node, &mut item)?;
-        Ok(())
+        let root_node = &self.get_node(Self::ROOT);
+        self._for_each(func, level, root_node)
     }
 }
 

@@ -1,4 +1,5 @@
 mod app;
+mod indent;
 mod output;
 mod pathtree;
 mod report;
@@ -15,6 +16,7 @@ use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
 
 use crate::app::build_app;
+use crate::indent::{AsciiMarks, IndentationLevel, NullLevel, TreeLevel, UnicodeMarks};
 use crate::output::write_tree_item;
 use crate::pathtree::TreeBuilder;
 use crate::report::Report;
@@ -72,8 +74,14 @@ fn get_walk(path: &Path, settings: &Settings) -> Result<ignore::Walk, ignore::Er
     Ok(get_walk_builder(path, settings)?.build())
 }
 
-fn write_tree<'a, W>(output: &mut W, paths: Vec<&'a Path>, settings: &Settings) -> Result<(), Error>
+fn write_tree<'a, L, W>(
+    output: &mut W,
+    level: &mut L,
+    paths: Vec<&'a Path>,
+    settings: &Settings,
+) -> Result<(), Error>
 where
+    L: IndentationLevel,
     W: Write,
 {
     let mut report = Report::new();
@@ -83,7 +91,9 @@ where
         let tree = TreeBuilder::from_paths(&mut direntries.iter().map(|e| e.path()))
             .unwrap()
             .build();
-        tree.for_each(&mut |item| write_tree_item(output, &mut report, item, &settings))?;
+        tree.for_each(level, &mut |level, path| {
+            write_tree_item(output, &mut report, &settings, level, path)
+        })?;
     }
     if settings.report {
         writeln!(output, "\n{}", report)?;
@@ -100,7 +110,12 @@ fn main() {
     };
 
     let mut stdout = io::stdout();
-    match write_tree(&mut stdout, root_paths, &settings) {
+    let mut level: Box<dyn IndentationLevel> = match settings.indentation {
+        None => Box::new(NullLevel::new()),
+        Some(settings::IndentationMarks::Ascii) => Box::new(TreeLevel::<AsciiMarks>::new()),
+        Some(settings::IndentationMarks::Unicode) => Box::new(TreeLevel::<UnicodeMarks>::new()),
+    };
+    match write_tree(&mut stdout, &mut level, root_paths, &settings) {
         Ok(()) => process::exit(0),
         Err(err) => {
             eprintln!("{}", err);

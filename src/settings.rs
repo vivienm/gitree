@@ -7,6 +7,11 @@ use lscolors::LsColors;
 
 use crate::utils::get_ls_colors;
 
+pub enum IndentationMarks {
+    Ascii,
+    Unicode,
+}
+
 pub struct Settings {
     // Print hidden files and directories.
     pub print_hidden: bool,
@@ -39,6 +44,9 @@ pub struct Settings {
 
     // Report files and directories.
     pub report: bool,
+
+    // Indentation lines.
+    pub indentation: Option<IndentationMarks>,
 
     // Color codes.
     pub ls_colors: LsColors,
@@ -78,6 +86,12 @@ impl Settings {
             ignore_case: matches.is_present("ignore_case"),
             sort_files: !matches.is_present("no_sort_files"),
             report: !matches.is_present("no_report"),
+            indentation: match matches.value_of("indentation") {
+                Some("ascii") => Some(IndentationMarks::Ascii),
+                Some("unicode") => Some(IndentationMarks::Unicode),
+                Some("none") => None,
+                _ => Some(IndentationMarks::Unicode),
+            },
             ls_colors: {
                 if colored_output {
                     get_ls_colors()

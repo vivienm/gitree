@@ -84,6 +84,14 @@ pub fn build_app() -> App<'static, 'static> {
                 .help("Does not print the report"),
         )
         .arg(
+            Arg::with_name("indentation")
+                .long("indentation")
+                .takes_value(true)
+                .value_name("TYPE")
+                .possible_values(&["none", "ascii", "unicode"])
+                .help("Indentation lines"),
+        )
+        .arg(
             Arg::with_name("color")
                 .long("color")
                 .short("c")
