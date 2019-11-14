@@ -1,6 +1,7 @@
 use std::fmt;
 use std::fs::FileType;
 
+#[derive(Default)]
 pub struct Report {
     num_dirs: usize,
     num_files: usize,
@@ -8,10 +9,7 @@ pub struct Report {
 
 impl Report {
     pub fn new() -> Self {
-        Report {
-            num_dirs: 0,
-            num_files: 0,
-        }
+        Self::default()
     }
 
     pub fn add(&mut self, toplevel: bool, file_type: FileType) {

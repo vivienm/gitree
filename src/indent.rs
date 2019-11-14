@@ -42,9 +42,15 @@ pub struct TreeLevel<M> {
     phantom: PhantomData<M>,
 }
 
+impl<M> Default for TreeLevel<M> {
+    fn default() -> Self {
+        Self::with_capacity(16)
+    }
+}
+
 impl<M> TreeLevel<M> {
     pub fn new() -> Self {
-        Self::with_capacity(16)
+        Self::default()
     }
 
     pub fn with_capacity(capacity: usize) -> Self {
@@ -99,9 +105,15 @@ pub struct NullLevel {
     empty: bool,
 }
 
+impl Default for NullLevel {
+    fn default() -> Self {
+        NullLevel { empty: true }
+    }
+}
+
 impl NullLevel {
     pub fn new() -> Self {
-        NullLevel { empty: true }
+        Self::default()
     }
 }
 
