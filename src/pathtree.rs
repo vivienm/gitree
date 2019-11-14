@@ -95,7 +95,7 @@ impl<'a> TreeBuilder<'a> {
     }
 
     fn push(&mut self, path: &'a Path) {
-        // At his point, we know that path is not a root.
+        // At this point, we know that path is not a root.
 
         let extra_depth = {
             // Compute the number of common components from root.
