@@ -22,7 +22,7 @@ pub struct UnicodeMarks;
 
 impl IndentationMarks for UnicodeMarks {
     const TAB: &'static str = AsciiMarks::TAB;
-    const BAR: &'static str = AsciiMarks::BAR;
+    const BAR: &'static str = "│   ";
     const TEE: &'static str = "├── ";
     const ELL: &'static str = "└── ";
 }
