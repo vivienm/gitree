@@ -4,7 +4,6 @@ use std::fs;
 use std::io::{self, Write};
 use std::path::Path;
 
-use ansi_term;
 use lscolors::{LsColors, Style};
 
 use crate::indent::IndentationLevel;

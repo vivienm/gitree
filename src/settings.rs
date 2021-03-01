@@ -1,8 +1,6 @@
 use std::ffi::OsString;
 use std::path::PathBuf;
 
-use atty;
-use clap;
 use lscolors::LsColors;
 
 use crate::utils::get_ls_colors;

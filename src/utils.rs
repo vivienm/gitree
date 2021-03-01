@@ -40,13 +40,13 @@ pub fn compare_file_names(file_name_1: &OsStr, file_name_2: &OsStr) -> Ordering 
             (Some(byte_1), Some(byte_2)) => {
                 let byte_1 = byte_1.to_ascii_lowercase();
                 let byte_2 = byte_2.to_ascii_lowercase();
-                if byte_1 < byte_2 {
-                    return Ordering::Less;
-                } else if byte_1 > byte_2 {
-                    return Ordering::Greater;
-                } else {
-                    byte_1_opt = bytes_1.next();
-                    byte_2_opt = bytes_2.next();
+                match byte_1.cmp(&byte_2) {
+                    Ordering::Less => return Ordering::Less,
+                    Ordering::Greater => return Ordering::Greater,
+                    Ordering::Equal => {
+                        byte_1_opt = bytes_1.next();
+                        byte_2_opt = bytes_2.next();
+                    }
                 }
             }
         }
