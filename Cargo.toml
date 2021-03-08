@@ -13,10 +13,10 @@ build = "build.rs"
 [dependencies]
 ansi_term = "0.12.1"
 atty = "0.2.14"
-clap = "2.33.3"
 derive_more = "0.99.1"
 ignore = "0.4.7"
 lscolors = "0.7.1"
+structopt = "0.3.21"
 
 [build-dependencies]
-clap = "2.33.3"
+structopt = "0.3.21"

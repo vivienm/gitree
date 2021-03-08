@@ -8,7 +8,6 @@ use lscolors::{LsColors, Style};
 
 use crate::indent::IndentationLevel;
 use crate::report::Report;
-use crate::settings::Settings;
 
 fn get_path_label(path: &Path, print_path: bool) -> borrow::Cow<str> {
     if print_path {
@@ -85,12 +84,13 @@ where
     Ok(())
 }
 
-pub fn write_tree_item<L, W>(
+pub fn write_tree_item<'a, L, W>(
     output: &mut W,
     report: &mut Report,
-    settings: &Settings,
     level: &L,
     path: &Path,
+    ls_colors: &'a LsColors,
+    print_path: bool,
 ) -> io::Result<()>
 where
     L: IndentationLevel,
@@ -103,8 +103,8 @@ where
         output,
         report,
         path,
-        &settings.ls_colors,
-        toplevel || settings.print_path,
+        ls_colors,
+        toplevel || print_path,
     )?;
     Ok(())
 }
