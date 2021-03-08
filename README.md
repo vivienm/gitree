@@ -1,15 +1,9 @@
 # Gitree
 
-Gitree is a shell tool that prints a directory tree
-while respecting [gitignore rules][gitignore].
+Gitree is a shell tool that prints a directory tree while respecting [gitignore rules](https://git-scm.com/docs/gitignore).
 
-Gitree is just a small personal project to learn some Rust :)
-If you are looking for a listing tool
-with a tree view and support for gitignore rules,
-you might be interested in [exa][exa].
-
-[exa]: https://the.exa.website
-[gitignore]: https://git-scm.com/docs/gitignore
+Gitree is just a small personal project to learn some Rust :slightly_smiling_face:.
+If you are looking for a listing tool with a tree view and support for gitignore rules, you might be interested in [exa](https://git-scm.com/docs/gitignore).
 
 ## Screenshot
 
@@ -17,14 +11,8 @@ you might be interested in [exa][exa].
 
 ## Installation
 
-```bash
-git clone https://github.com/vivienm/gitree
-cd gitree
+You may install `gitree` locally by running
 
-cargo build
-cargo test
-cargo install
-
-export PATH="$HOME/.cargo/bin:$PATH"
-gitree --help
+```console
+$ cargo install --git https://github.com/vivienm/gitree.git
 ```
