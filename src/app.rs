@@ -82,7 +82,7 @@ where
     };
     let mut report = Report::new();
     for root_path in &args.directories {
-        let walk = get_walk(root_path, &args)?;
+        let walk = get_walk(root_path, args)?;
         let direntries = walk.collect::<Result<Vec<_>, _>>()?;
         let tree = TreeBuilder::from_paths(&mut direntries.iter().map(|e| e.path()))
             .unwrap()
@@ -111,7 +111,7 @@ pub fn main(args: &cli::Args) {
         IndentationMarks::Ascii => Box::new(TreeLevel::<AsciiMarks>::new()),
         IndentationMarks::Unicode => Box::new(TreeLevel::<UnicodeMarks>::new()),
     };
-    match write_tree(&mut stdout, &mut level, &args) {
+    match write_tree(&mut stdout, &mut level, args) {
         Ok(()) => process::exit(0),
         Err(err) => {
             eprintln!("{}", err);
